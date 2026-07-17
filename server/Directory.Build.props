@@ -1,0 +1,15 @@
+<Project>
+
+  <!--
+    GHSA-2m69-gcr7-jv3q flags the SQLite native library bundled transitively through
+    Microsoft.EntityFrameworkCore.Sqlite (SQLitePCLRaw). No fixed SQLitePCLRaw release is
+    available yet (the latest published bundle is 2.1.11). Bazaar uses SQLite only for a local
+    development/demo database with fully parameterized queries and no untrusted SQL, so the
+    practical exposure is negligible. This suppression is intentional and should be removed once
+    a patched bundle ships.
+  -->
+  <ItemGroup>
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-2m69-gcr7-jv3q" />
+  </ItemGroup>
+
+</Project>
