@@ -539,3 +539,35 @@ textarea {
 .product-detail__add {
   margin-top: 12px;
 }
+
+/* Orders admin */
+.order-status {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  background: var(--panel);
+}
+.order-actions {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+.order-address {
+  font-style: normal;
+  line-height: 1.6;
+}
+.checkout__discount {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.checkout__discount-row {
+  display: flex;
+  gap: 8px;
+}
+.checkout__discount-row input {
+  flex: 1;
+}

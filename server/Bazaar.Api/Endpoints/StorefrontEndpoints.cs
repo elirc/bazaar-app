@@ -1,5 +1,6 @@
 using Bazaar.Api.Contracts;
 using Bazaar.Domain;
+using Bazaar.Domain.Common;
 using Bazaar.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,8 +18,26 @@ public static class StorefrontEndpoints
         group.MapGet("/products", GetProducts);
         group.MapGet("/products/{slug}", GetProductBySlug);
         group.MapGet("/collections", GetCollections);
+        group.MapGet("/discounts/{code}", PreviewDiscount);
 
         return app;
+    }
+
+    private static async Task<IResult> PreviewDiscount(
+        BazaarDbContext db, string code, decimal? subtotal, string? currency, CancellationToken ct)
+    {
+        var normalized = code.Trim().ToUpperInvariant();
+        var discount = await db.DiscountCodes.AsNoTracking().FirstOrDefaultAsync(d => d.Code == normalized, ct);
+        if (discount is null)
+            return Results.Ok(new DiscountPreviewDto(normalized, false, "Unknown discount code.", null));
+        if (!discount.IsRedeemable(DateTimeOffset.UtcNow))
+            return Results.Ok(new DiscountPreviewDto(normalized, false, "This code is not currently redeemable.", null));
+
+        var cur = string.IsNullOrWhiteSpace(currency) ? Money.DefaultCurrency : currency.ToUpperInvariant();
+        var amount = subtotal.HasValue
+            ? discount.ComputeDiscount(new Money(subtotal.Value, cur))
+            : Money.Zero(cur);
+        return Results.Ok(new DiscountPreviewDto(normalized, true, null, amount.ToDto()));
     }
 
     private static async Task<IResult> GetProducts(

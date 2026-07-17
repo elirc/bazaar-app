@@ -1,5 +1,12 @@
 import { apiRequest } from './client'
-import type { Cart, Order } from './types'
+import type { Cart, DiscountPreview, Order } from './types'
+
+export function previewDiscount(code: string, subtotal: number, currency: string, signal?: AbortSignal) {
+  return apiRequest<DiscountPreview>(`/api/storefront/discounts/${encodeURIComponent(code)}`, {
+    query: { subtotal, currency },
+    signal,
+  })
+}
 
 export function createCart() {
   return apiRequest<Cart>('/api/cart', { method: 'POST' })

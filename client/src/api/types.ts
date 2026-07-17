@@ -127,3 +127,33 @@ export interface Order {
   items: OrderLine[]
   placedAt: string
 }
+
+export interface OrderSummary {
+  id: string
+  number: string
+  email: string
+  status: string
+  grandTotal: Money
+  itemCount: number
+  placedAt: string
+}
+
+export interface DiscountPreview {
+  code: string
+  valid: boolean
+  reason: string | null
+  discount: Money | null
+}
+
+export interface Discount {
+  id: string
+  code: string
+  type: string
+  value: number
+  currency: string
+  isActive: boolean
+  startsAt: string | null
+  endsAt: string | null
+  usageLimit: number | null
+  timesUsed: number
+}

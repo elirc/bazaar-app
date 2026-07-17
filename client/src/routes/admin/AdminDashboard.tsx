@@ -14,6 +14,14 @@ export default function AdminDashboard() {
           <h2>Collections</h2>
           <p>Group products into browsable collections.</p>
         </Link>
+        <Link to="/admin/orders" className="admin-card">
+          <h2>Orders</h2>
+          <p>Review orders and move them through their lifecycle.</p>
+        </Link>
+        <Link to="/admin/discounts" className="admin-card">
+          <h2>Discounts</h2>
+          <p>Create and manage discount codes.</p>
+        </Link>
       </div>
     </section>
   )
