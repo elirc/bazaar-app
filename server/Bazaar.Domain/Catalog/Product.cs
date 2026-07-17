@@ -39,4 +39,13 @@ public class Product
         if (!_collections.Contains(collection))
             _collections.Add(collection);
     }
+
+    public void ClearImages() => _images.Clear();
+
+    public void SetCollections(IEnumerable<Collection> collections)
+    {
+        _collections.Clear();
+        foreach (var collection in collections)
+            _collections.Add(collection);
+    }
 }

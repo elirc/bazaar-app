@@ -1,4 +1,4 @@
-import { Link, Outlet } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
 
 export default function AdminLayout() {
   return (
@@ -6,8 +6,10 @@ export default function AdminLayout() {
       <aside className="admin__sidebar">
         <h2 className="brand">Bazaar Admin</h2>
         <nav className="admin__nav">
-          <Link to="/admin">Dashboard</Link>
-          <Link to="/">← Back to store</Link>
+          <NavLink to="/admin" end>Dashboard</NavLink>
+          <NavLink to="/admin/products">Products</NavLink>
+          <NavLink to="/admin/collections">Collections</NavLink>
+          <NavLink to="/">← Back to store</NavLink>
         </nav>
       </aside>
       <main className="admin__main">

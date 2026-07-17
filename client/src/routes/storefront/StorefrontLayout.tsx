@@ -1,4 +1,5 @@
 import { Link, Outlet } from 'react-router-dom'
+import ApiStatus from '../../components/ApiStatus'
 
 export default function StorefrontLayout() {
   return (
@@ -15,6 +16,7 @@ export default function StorefrontLayout() {
       </main>
       <footer className="storefront__footer">
         <span>Bazaar — a Shopify-Lite demo storefront</span>
+        <ApiStatus />
       </footer>
     </div>
   )

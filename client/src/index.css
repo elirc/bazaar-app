@@ -164,3 +164,233 @@ button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+input,
+select,
+textarea {
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+}
+
+.error {
+  color: var(--danger);
+}
+.success {
+  color: var(--ok);
+}
+.muted {
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* Catalog / storefront */
+.catalog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.catalog__search {
+  display: flex;
+  gap: 8px;
+}
+.catalog__filters {
+  display: flex;
+  gap: 20px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+.catalog__filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+.catalog__count {
+  color: var(--text);
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+.product-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+  transition: box-shadow 0.15s ease;
+}
+.product-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  text-decoration: none;
+}
+.product-card__media,
+.product-detail__media {
+  aspect-ratio: 1 / 1;
+  background: var(--panel);
+}
+.product-card__media img,
+.product-detail__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.product-card__placeholder {
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(45deg, var(--panel), var(--panel) 10px, var(--border) 10px, var(--border) 20px);
+}
+.product-card__body {
+  padding: 12px 14px;
+}
+.product-card__title {
+  font-size: 15px;
+  margin: 0 0 4px;
+}
+.product-card__vendor {
+  color: var(--text);
+  font-size: 13px;
+}
+.product-card__price {
+  font-weight: 600;
+  color: var(--text-h);
+  margin-top: 6px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 28px;
+}
+
+/* Product detail */
+.product-detail__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 32px;
+  margin-top: 16px;
+}
+.product-detail__price {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+.product-detail__variant {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 320px;
+  margin: 16px 0;
+}
+.product-detail__options {
+  list-style: none;
+  padding: 0;
+}
+@media (max-width: 720px) {
+  .product-detail__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Admin */
+.admin-toolbar,
+.admin-filters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.admin-filters {
+  justify-content: flex-start;
+}
+.admin-filters form {
+  display: flex;
+  gap: 8px;
+}
+.admin-filters label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.row-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 560px;
+  margin: 16px 0;
+}
+.admin-form.inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  max-width: none;
+}
+.admin-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+.admin-form fieldset {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.checkbox-group label {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+.variant-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.admin-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+.admin-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  color: inherit;
+  text-decoration: none;
+}
+.admin-card:hover {
+  border-color: var(--accent);
+  text-decoration: none;
+}
+.admin__nav a.active {
+  font-weight: 700;
+  color: var(--text-h);
+}
