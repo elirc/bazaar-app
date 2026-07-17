@@ -72,3 +72,58 @@ export interface PagedResult<T> {
   hasPrevious: boolean
   hasNext: boolean
 }
+
+export interface CartLine {
+  variantId: string
+  productSlug: string
+  productTitle: string
+  variantTitle: string
+  sku: string
+  unitPrice: Money
+  quantity: number
+  lineTotal: Money
+  available: number
+}
+
+export interface Cart {
+  id: string
+  token: string
+  items: CartLine[]
+  subtotal: Money
+  itemCount: number
+}
+
+export interface Address {
+  name: string
+  line1: string
+  line2: string | null
+  city: string
+  region: string | null
+  postalCode: string
+  country: string
+}
+
+export interface OrderLine {
+  sku: string
+  title: string
+  quantity: number
+  unitPrice: Money
+  lineTotal: Money
+}
+
+export interface Order {
+  id: string
+  number: string
+  email: string
+  status: string
+  currency: string
+  shippingAddress: Address
+  subtotal: Money
+  discountTotal: Money
+  taxTotal: Money
+  shippingTotal: Money
+  grandTotal: Money
+  discountCode: string | null
+  items: OrderLine[]
+  placedAt: string
+}

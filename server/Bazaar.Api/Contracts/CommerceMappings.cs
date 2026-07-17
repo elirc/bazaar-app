@@ -1,0 +1,79 @@
+using Bazaar.Domain.Carts;
+using Bazaar.Domain.Common;
+using Bazaar.Domain.Orders;
+
+namespace Bazaar.Api.Contracts;
+
+public static class CommerceMappings
+{
+    public static CartDto ToDto(this Cart cart, IReadOnlyDictionary<Guid, int> availability)
+    {
+        var currency = cart.Items.Count > 0
+            ? cart.Items[0].Variant!.Price.Currency
+            : Money.DefaultCurrency;
+
+        var lines = cart.Items
+            .OrderBy(i => i.Variant?.Product?.Title)
+            .Select(i =>
+            {
+                var variant = i.Variant!;
+                var lineTotal = variant.Price.MultiplyBy(i.Quantity);
+                return new CartLineDto(
+                    variant.Id,
+                    variant.Product?.Slug ?? string.Empty,
+                    variant.Product?.Title ?? variant.Title,
+                    variant.Title,
+                    variant.Sku,
+                    variant.Price.ToDto(),
+                    i.Quantity,
+                    lineTotal.ToDto(),
+                    availability.TryGetValue(variant.Id, out var qty) ? qty : 0);
+            })
+            .ToList();
+
+        var subtotal = cart.Items.Aggregate(
+            Money.Zero(currency),
+            (acc, i) => acc.Add(i.Variant!.Price.MultiplyBy(i.Quantity)));
+
+        return new CartDto(cart.Id, cart.Token, lines, subtotal.ToDto(), cart.Items.Sum(i => i.Quantity));
+    }
+
+    public static AddressDto ToDto(this Address address) =>
+        new(address.Name, address.Line1, address.Line2, address.City, address.Region, address.PostalCode, address.Country);
+
+    public static Address ToAddress(this AddressInput input) => new()
+    {
+        Name = input.Name!,
+        Line1 = input.Line1!,
+        Line2 = input.Line2,
+        City = input.City!,
+        Region = input.Region,
+        PostalCode = input.PostalCode!,
+        Country = input.Country!.ToUpperInvariant(),
+    };
+
+    public static OrderDto ToDto(this Order order) => new(
+        order.Id,
+        order.Number,
+        order.Email,
+        order.Status.ToString(),
+        order.Currency,
+        order.ShippingAddress.ToDto(),
+        order.Subtotal.ToDto(),
+        order.DiscountTotal.ToDto(),
+        order.TaxTotal.ToDto(),
+        order.ShippingTotal.ToDto(),
+        order.GrandTotal.ToDto(),
+        order.DiscountCode,
+        order.Items.Select(li => new OrderLineDto(li.Sku, li.Title, li.Quantity, li.UnitPrice.ToDto(), li.LineTotal.ToDto())).ToList(),
+        order.PlacedAt);
+
+    public static OrderSummaryDto ToSummaryDto(this Order order) => new(
+        order.Id,
+        order.Number,
+        order.Email,
+        order.Status.ToString(),
+        order.GrandTotal.ToDto(),
+        order.Items.Sum(li => li.Quantity),
+        order.PlacedAt);
+}

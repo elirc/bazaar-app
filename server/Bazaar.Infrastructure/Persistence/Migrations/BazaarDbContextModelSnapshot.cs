@@ -20,7 +20,6 @@ namespace Bazaar.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Bazaar.Domain.Carts.Cart", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<long>("CreatedAt")
@@ -50,7 +49,6 @@ namespace Bazaar.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Bazaar.Domain.Carts.CartLineItem", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<Guid>("CartId")
@@ -74,7 +72,6 @@ namespace Bazaar.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Bazaar.Domain.Catalog.Collection", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<long>("CreatedAt")
@@ -105,7 +102,6 @@ namespace Bazaar.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Bazaar.Domain.Catalog.Product", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<long>("CreatedAt")
@@ -149,7 +145,6 @@ namespace Bazaar.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Bazaar.Domain.Catalog.ProductVariant", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Position")
@@ -181,7 +176,6 @@ namespace Bazaar.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Bazaar.Domain.Customers.Customer", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<long>("CreatedAt")
@@ -211,7 +205,6 @@ namespace Bazaar.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Bazaar.Domain.Discounts.DiscountCode", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Code")
@@ -259,7 +252,6 @@ namespace Bazaar.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Bazaar.Domain.Inventory.InventoryItem", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("OnHand")
@@ -282,7 +274,6 @@ namespace Bazaar.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Bazaar.Domain.Orders.Order", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Currency")
@@ -329,7 +320,6 @@ namespace Bazaar.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Bazaar.Domain.Orders.OrderLineItem", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<Guid>("OrderId")
@@ -395,7 +385,6 @@ namespace Bazaar.Infrastructure.Persistence.Migrations
                     b.OwnsMany("Bazaar.Domain.Catalog.ProductImage", "Images", b1 =>
                         {
                             b1.Property<Guid>("Id")
-                                .ValueGeneratedOnAdd()
                                 .HasColumnType("TEXT");
 
                             b1.Property<string>("AltText")

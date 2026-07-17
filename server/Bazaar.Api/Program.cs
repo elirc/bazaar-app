@@ -34,6 +34,8 @@ app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "bazaar-ap
 
 app.MapStorefrontEndpoints();
 app.MapAdminCatalogEndpoints();
+app.MapCartEndpoints();
+app.MapCheckoutEndpoints();
 
 app.Run();
 

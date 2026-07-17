@@ -3,10 +3,13 @@ import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getStorefrontProduct } from '../../api/catalog'
 import { formatMoney } from '../../lib/format'
+import { useCart } from '../../cart/CartContext'
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>()
+  const { addItem } = useCart()
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
+  const [adding, setAdding] = useState(false)
 
   const { data: product, isLoading, isError, error } = useQuery({
     queryKey: ['storefront-product', slug],
@@ -28,6 +31,16 @@ export default function ProductDetailPage() {
 
   const selectedVariant =
     product.variants.find((v) => v.id === selectedVariantId) ?? product.variants[0]
+
+  async function handleAddToCart() {
+    if (!selectedVariant) return
+    setAdding(true)
+    try {
+      await addItem(selectedVariant.id, 1)
+    } finally {
+      setAdding(false)
+    }
+  }
 
   return (
     <article className="product-detail">
@@ -68,6 +81,15 @@ export default function ProductDetailPage() {
               ? `${selectedVariant.available} in stock`
               : 'Out of stock'}
           </p>
+
+          <button
+            type="button"
+            className="primary product-detail__add"
+            onClick={handleAddToCart}
+            disabled={adding || !selectedVariant || selectedVariant.available <= 0}
+          >
+            {adding ? 'Adding…' : 'Add to cart'}
+          </button>
 
           {selectedVariant && selectedVariant.options.length > 0 && (
             <ul className="product-detail__options">

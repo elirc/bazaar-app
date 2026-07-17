@@ -7,6 +7,7 @@ using Bazaar.Domain.Discounts;
 using Bazaar.Domain.Inventory;
 using Bazaar.Domain.Orders;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Bazaar.Infrastructure.Persistence;
@@ -206,6 +207,16 @@ public class BazaarDbContext : DbContext
             e.Navigation(li => li.UnitPrice).IsRequired();
             e.Navigation(li => li.LineTotal).IsRequired();
         });
+
+        // Guid primary keys are assigned by the domain (in entity initializers), not by the store.
+        // Telling EF they are never store-generated ensures a new child added to an already-tracked
+        // aggregate (e.g. a cart line) is INSERTed, not mistaken for an existing row and UPDATEd.
+        foreach (var property in b.Model.GetEntityTypes()
+                     .SelectMany(t => t.GetProperties())
+                     .Where(p => p.IsPrimaryKey() && p.ClrType == typeof(Guid)))
+        {
+            property.ValueGenerated = ValueGenerated.Never;
+        }
     }
 
     private static void MapMoney<T>(OwnedNavigationBuilder<T, Money> mb, string prefix) where T : class
