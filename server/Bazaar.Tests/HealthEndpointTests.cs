@@ -1,14 +1,14 @@
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
+using Bazaar.Tests.TestSupport;
 
 namespace Bazaar.Tests;
 
-public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public class HealthEndpointTests : IClassFixture<BazaarApiFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly BazaarApiFactory _factory;
 
-    public HealthEndpointTests(WebApplicationFactory<Program> factory)
+    public HealthEndpointTests(BazaarApiFactory factory)
     {
         _factory = factory;
     }
