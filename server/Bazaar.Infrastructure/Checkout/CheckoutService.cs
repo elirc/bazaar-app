@@ -1,6 +1,7 @@
 using Bazaar.Domain;
 using Bazaar.Domain.Checkout;
 using Bazaar.Domain.Common;
+using Bazaar.Domain.Discounts;
 using Bazaar.Domain.Orders;
 using Bazaar.Domain.Payments;
 using Bazaar.Infrastructure.Persistence;
@@ -8,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bazaar.Infrastructure.Checkout;
 
-public sealed record CheckoutCommand(string CartToken, string Email, Address ShippingAddress);
+public sealed record CheckoutCommand(string CartToken, string Email, Address ShippingAddress, string? DiscountCode = null);
 
 public enum CheckoutStatus
 {
@@ -16,6 +17,7 @@ public enum CheckoutStatus
     CartNotFound,
     CartEmpty,
     InsufficientStock,
+    InvalidDiscount,
     PaymentDeclined,
 }
 
@@ -85,7 +87,18 @@ public sealed class CheckoutService
         var itemCount = cart.Items.Sum(i => i.Quantity);
         var tax = _tax.CalculateTax(subtotal);
         var shipping = _shipping.CalculateShipping(subtotal, itemCount);
+
         var discount = Money.Zero(currency);
+        DiscountCode? appliedCode = null;
+        if (!string.IsNullOrWhiteSpace(command.DiscountCode))
+        {
+            var normalized = command.DiscountCode.Trim().ToUpperInvariant();
+            appliedCode = await _db.DiscountCodes.FirstOrDefaultAsync(d => d.Code == normalized, ct);
+            if (appliedCode is null || !appliedCode.IsRedeemable(DateTimeOffset.UtcNow))
+                return CheckoutOutcome.Fail(CheckoutStatus.InvalidDiscount, "That discount code is not valid.");
+            discount = appliedCode.ComputeDiscount(subtotal);
+        }
+
         var grandTotal = subtotal.Add(tax).Add(shipping).Subtract(discount);
 
         var order = new Order
@@ -100,6 +113,7 @@ public sealed class CheckoutService
             TaxTotal = tax,
             ShippingTotal = shipping,
             GrandTotal = grandTotal,
+            DiscountCode = appliedCode?.Code,
         };
 
         foreach (var item in cart.Items)
@@ -124,6 +138,7 @@ public sealed class CheckoutService
         foreach (var item in cart.Items)
             inventoryByVariant[item.VariantId].Commit(item.Quantity);
 
+        appliedCode?.MarkRedeemed();
         order.TransitionTo(OrderStatus.Paid);
         cart.Status = CartStatus.Converted;
 

@@ -2,9 +2,10 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { useCart } from '../../cart/CartContext'
-import { checkout } from '../../api/cart'
+import { checkout, previewDiscount } from '../../api/cart'
 import { ApiError } from '../../api/client'
 import { formatMoney } from '../../lib/format'
+import type { DiscountPreview } from '../../api/types'
 
 export default function CheckoutPage() {
   const { cart, resetCart } = useCart()
@@ -19,11 +20,20 @@ export default function CheckoutPage() {
   const [postalCode, setPostalCode] = useState('')
   const [country, setCountry] = useState('US')
 
+  const [discountInput, setDiscountInput] = useState('')
+  const [discount, setDiscount] = useState<DiscountPreview | null>(null)
+
+  const applyDiscount = useMutation({
+    mutationFn: () => previewDiscount(discountInput.trim(), cart!.subtotal.amount, cart!.subtotal.currency),
+    onSuccess: (preview) => setDiscount(preview),
+  })
+
   const mutation = useMutation({
     mutationFn: () =>
       checkout({
         cartToken: cart!.token,
         email,
+        discountCode: discount?.valid ? discount.code : undefined,
         shippingAddress: {
           name,
           line1,
@@ -126,6 +136,34 @@ export default function CheckoutPage() {
             <span>Subtotal</span>
             <strong>{formatMoney(cart.subtotal)}</strong>
           </div>
+
+          <div className="checkout__discount">
+            <label htmlFor="discount-code">Discount code</label>
+            <div className="checkout__discount-row">
+              <input
+                id="discount-code"
+                value={discountInput}
+                onChange={(e) => setDiscountInput(e.target.value.toUpperCase())}
+                placeholder="e.g. WELCOME10"
+              />
+              <button
+                type="button"
+                onClick={() => applyDiscount.mutate()}
+                disabled={!discountInput.trim() || applyDiscount.isPending}
+              >
+                Apply
+              </button>
+            </div>
+            {discount && discount.valid && (
+              <p className="success" role="status">
+                {discount.code} applied — {formatMoney(discount.discount)} off
+              </p>
+            )}
+            {discount && !discount.valid && (
+              <p className="error" role="status">{discount.reason ?? 'Invalid code.'}</p>
+            )}
+          </div>
+
           <p className="muted">Tax and shipping are calculated at payment.</p>
         </aside>
       </div>

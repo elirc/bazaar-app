@@ -1,11 +1,25 @@
 using Bazaar.Domain.Carts;
 using Bazaar.Domain.Common;
+using Bazaar.Domain.Discounts;
 using Bazaar.Domain.Orders;
 
 namespace Bazaar.Api.Contracts;
 
 public static class CommerceMappings
 {
+    public static DiscountDto ToDto(this DiscountCode code) => new(
+        code.Id,
+        code.Code,
+        code.Type.ToString(),
+        code.Value,
+        code.Currency,
+        code.IsActive,
+        code.StartsAt,
+        code.EndsAt,
+        code.UsageLimit,
+        code.TimesUsed);
+
+
     public static CartDto ToDto(this Cart cart, IReadOnlyDictionary<Guid, int> availability)
     {
         var currency = cart.Items.Count > 0

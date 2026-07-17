@@ -9,6 +9,9 @@ import AdminDashboard from './routes/admin/AdminDashboard'
 import AdminProductsPage from './routes/admin/AdminProductsPage'
 import AdminProductEditPage from './routes/admin/AdminProductEditPage'
 import AdminCollectionsPage from './routes/admin/AdminCollectionsPage'
+import AdminOrdersPage from './routes/admin/AdminOrdersPage'
+import AdminOrderDetailPage from './routes/admin/AdminOrderDetailPage'
+import AdminDiscountsPage from './routes/admin/AdminDiscountsPage'
 
 export default function App() {
   return (
@@ -25,6 +28,9 @@ export default function App() {
         <Route path="products/new" element={<AdminProductEditPage />} />
         <Route path="products/:id" element={<AdminProductEditPage />} />
         <Route path="collections" element={<AdminCollectionsPage />} />
+        <Route path="orders" element={<AdminOrdersPage />} />
+        <Route path="orders/:id" element={<AdminOrderDetailPage />} />
+        <Route path="discounts" element={<AdminDiscountsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
