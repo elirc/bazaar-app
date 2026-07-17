@@ -131,8 +131,8 @@ bazaar-app/
   `400` (a non-nullable `Guid`/`DateTimeOffset` with `[Required]` is a no-op); `Include`
   runs before `Skip`/`Take`.
 - **Security audit:** `GHSA-2m69-gcr7-jv3q` (the SQLite native library bundled transitively
-  by EF Core) is suppressed in `server/Directory.Build.props` with a documented rationale —
-  no patched SQLitePCLRaw release exists yet and SQLite is used only for a local demo DB.
+  by EF Core) is resolved by pinning `SQLitePCLRaw.bundle_e_sqlite3` to `3.0.3` in
+  `Bazaar.Infrastructure`; the NuGet audit is clean with no suppression.
 
 ## Tests
 

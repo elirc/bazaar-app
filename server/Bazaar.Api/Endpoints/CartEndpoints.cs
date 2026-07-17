@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Bazaar.Api.Auth;
 using Bazaar.Api.Contracts;
 using Bazaar.Api.Validation;
 using Bazaar.Domain;
@@ -22,9 +24,10 @@ public static class CartEndpoints
         return app;
     }
 
-    private static async Task<IResult> CreateCart(BazaarDbContext db, CancellationToken ct)
+    private static async Task<IResult> CreateCart(BazaarDbContext db, ClaimsPrincipal principal, CancellationToken ct)
     {
-        var cart = new Cart();
+        // A signed-in shopper's cart is tagged with their account; guests get an untagged cart.
+        var cart = new Cart { CustomerId = principal.GetCustomerId() };
         db.Carts.Add(cart);
         await db.SaveChangesAsync(ct);
         return Results.Created($"/api/cart/{cart.Token}", cart.ToDto(EmptyAvailability));

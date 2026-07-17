@@ -38,6 +38,7 @@ public class BazaarDbContext : DbContext
         configurationBuilder.Properties<OrderStatus>().HaveConversion<string>().HaveMaxLength(20);
         configurationBuilder.Properties<CartStatus>().HaveConversion<string>().HaveMaxLength(20);
         configurationBuilder.Properties<DiscountType>().HaveConversion<string>().HaveMaxLength(20);
+        configurationBuilder.Properties<CustomerRole>().HaveConversion<string>().HaveMaxLength(20);
     }
 
     protected override void OnModelCreating(ModelBuilder b)
@@ -121,6 +122,7 @@ public class BazaarDbContext : DbContext
             e.HasKey(c => c.Id);
             e.Property(c => c.Token).IsRequired().HasMaxLength(64);
             e.HasIndex(c => c.Token).IsUnique();
+            e.HasIndex(c => c.CustomerId);
             e.Ignore(c => c.TotalQuantity);
 
             e.HasMany(c => c.Items)
@@ -147,6 +149,8 @@ public class BazaarDbContext : DbContext
             e.HasIndex(c => c.Email).IsUnique();
             e.Property(c => c.FirstName).HasMaxLength(120);
             e.Property(c => c.LastName).HasMaxLength(120);
+            e.Property(c => c.PasswordHash).IsRequired().HasMaxLength(400);
+            e.Ignore(c => c.DisplayName);
         });
 
         b.Entity<DiscountCode>(e =>
@@ -163,6 +167,7 @@ public class BazaarDbContext : DbContext
             e.HasKey(o => o.Id);
             e.Property(o => o.Number).IsRequired().HasMaxLength(30);
             e.HasIndex(o => o.Number).IsUnique();
+            e.HasIndex(o => o.CustomerId);
             e.Property(o => o.Email).IsRequired().HasMaxLength(320);
             e.Property(o => o.Currency).IsRequired().HasMaxLength(3);
             e.Property(o => o.DiscountCode).HasMaxLength(60);

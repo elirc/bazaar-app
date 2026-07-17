@@ -145,6 +145,20 @@ export interface DiscountPreview {
   discount: Money | null
 }
 
+export interface CurrentUser {
+  id: string
+  email: string
+  firstName: string | null
+  lastName: string | null
+  role: string
+}
+
+export interface AuthResponse {
+  token: string
+  expiresAt: string
+  customer: CurrentUser
+}
+
 export interface Discount {
   id: string
   code: string

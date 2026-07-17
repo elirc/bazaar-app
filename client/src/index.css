@@ -571,3 +571,15 @@ textarea {
 .checkout__discount-row input {
   flex: 1;
 }
+
+/* Auth + account */
+.auth-page {
+  max-width: 420px;
+  margin: 0 auto;
+}
+.auth-page .admin-form {
+  max-width: none;
+}
+.account h2 {
+  margin-top: 28px;
+}

@@ -4,6 +4,10 @@ import ProductListPage from './routes/storefront/ProductListPage'
 import ProductDetailPage from './routes/storefront/ProductDetailPage'
 import CheckoutPage from './routes/storefront/CheckoutPage'
 import OrderConfirmationPage from './routes/storefront/OrderConfirmationPage'
+import AccountOrdersPage from './routes/storefront/AccountOrdersPage'
+import LoginPage from './routes/auth/LoginPage'
+import RegisterPage from './routes/auth/RegisterPage'
+import RequireAdmin from './auth/RequireAdmin'
 import AdminLayout from './routes/admin/AdminLayout'
 import AdminDashboard from './routes/admin/AdminDashboard'
 import AdminProductsPage from './routes/admin/AdminProductsPage'
@@ -21,8 +25,18 @@ export default function App() {
         <Route path="products/:slug" element={<ProductDetailPage />} />
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="order/:id" element={<OrderConfirmationPage />} />
+        <Route path="account" element={<AccountOrdersPage />} />
+        <Route path="login" element={<LoginPage />} />
+        <Route path="register" element={<RegisterPage />} />
       </Route>
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route
+        path="/admin"
+        element={
+          <RequireAdmin>
+            <AdminLayout />
+          </RequireAdmin>
+        }
+      >
         <Route index element={<AdminDashboard />} />
         <Route path="products" element={<AdminProductsPage />} />
         <Route path="products/new" element={<AdminProductEditPage />} />

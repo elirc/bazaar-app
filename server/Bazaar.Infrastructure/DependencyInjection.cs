@@ -1,5 +1,6 @@
 using Bazaar.Domain.Checkout;
 using Bazaar.Domain.Payments;
+using Bazaar.Infrastructure.Auth;
 using Bazaar.Infrastructure.Checkout;
 using Bazaar.Infrastructure.Payments;
 using Bazaar.Infrastructure.Persistence;
@@ -21,6 +22,9 @@ public static class DependencyInjection
         services.AddSingleton<ITaxCalculator, FlatRateTaxCalculator>();
         services.AddSingleton<IShippingCalculator, ThresholdShippingCalculator>();
         services.AddScoped<CheckoutService>();
+
+        services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
+        services.AddSingleton<ITokenService, JwtTokenService>();
 
         return services;
     }

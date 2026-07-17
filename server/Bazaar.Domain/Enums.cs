@@ -29,3 +29,10 @@ public enum DiscountType
     Percentage,
     FixedAmount,
 }
+
+/// <summary>Access level for a customer account. Admins may reach the back-office endpoints.</summary>
+public enum CustomerRole
+{
+    Customer,
+    Admin,
+}

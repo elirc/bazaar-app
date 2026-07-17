@@ -9,7 +9,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bazaar.Infrastructure.Checkout;
 
-public sealed record CheckoutCommand(string CartToken, string Email, Address ShippingAddress, string? DiscountCode = null);
+public sealed record CheckoutCommand(
+    string CartToken,
+    string Email,
+    Address ShippingAddress,
+    string? DiscountCode = null,
+    Guid? CustomerId = null);
 
 public enum CheckoutStatus
 {
@@ -104,6 +109,7 @@ public sealed class CheckoutService
         var order = new Order
         {
             Number = await NextOrderNumberAsync(ct),
+            CustomerId = command.CustomerId ?? cart.CustomerId,
             Email = command.Email,
             Currency = currency,
             Status = OrderStatus.Pending,

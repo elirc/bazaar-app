@@ -5,7 +5,7 @@ using Bazaar.Tests.TestSupport;
 
 namespace Bazaar.Tests.Endpoints;
 
-public class AdminCatalogTests : IClassFixture<BazaarApiFactory>
+public class AdminCatalogTests : IClassFixture<BazaarApiFactory>, IAsyncLifetime
 {
     private readonly HttpClient _client;
 
@@ -13,6 +13,10 @@ public class AdminCatalogTests : IClassFixture<BazaarApiFactory>
     {
         _client = factory.CreateClient();
     }
+
+    public Task InitializeAsync() => _client.AuthenticateAdminAsync();
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     private static CreateProductRequest NewProduct(string slug, string sku, decimal price = 29.99m) => new()
     {

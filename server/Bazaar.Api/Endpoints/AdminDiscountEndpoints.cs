@@ -12,7 +12,7 @@ public static class AdminDiscountEndpoints
 {
     public static IEndpointRouteBuilder MapAdminDiscountEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/admin/discounts").WithTags("Admin: Discounts");
+        var group = app.MapGroup("/api/admin/discounts").WithTags("Admin: Discounts").RequireAuthorization("Admin");
         group.MapGet("/", ListDiscounts);
         group.MapPost("/", CreateDiscount);
         group.MapDelete("/{id:guid}", DeleteDiscount);
