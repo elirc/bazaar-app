@@ -12,6 +12,10 @@ public class Cart
 
     public Guid Id { get; private set; } = Guid.NewGuid();
     public string Token { get; set; } = Guid.NewGuid().ToString("N");
+
+    /// <summary>Owning customer when the cart is created (or claimed) by a signed-in account; null for guests.</summary>
+    public Guid? CustomerId { get; set; }
+
     public CartStatus Status { get; set; } = CartStatus.Open;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;

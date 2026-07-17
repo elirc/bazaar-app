@@ -1,5 +1,12 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
+/** Bearer token attached to every request when set. Managed by the auth context. */
+let authToken: string | null = null
+
+export function setAuthToken(token: string | null): void {
+  authToken = token
+}
+
 /** Error thrown when the API returns a non-2xx response. */
 export class ApiError extends Error {
   readonly status: number
@@ -37,6 +44,7 @@ function buildUrl(path: string, query?: RequestOptions['query']): string {
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, signal, query } = options
   const headers: Record<string, string> = {}
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`
   let payload: BodyInit | undefined
   if (body !== undefined) {
     headers['Content-Type'] = 'application/json'

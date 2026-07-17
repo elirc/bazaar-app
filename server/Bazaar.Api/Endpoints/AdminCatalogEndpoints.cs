@@ -16,17 +16,17 @@ public static class AdminCatalogEndpoints
 
     public static IEndpointRouteBuilder MapAdminCatalogEndpoints(this IEndpointRouteBuilder app)
     {
-        var products = app.MapGroup("/api/admin/products").WithTags("Admin: Products");
+        var products = app.MapGroup("/api/admin/products").WithTags("Admin: Products").RequireAuthorization("Admin");
         products.MapGet("/", ListProducts);
         products.MapGet("/{id:guid}", GetProduct);
         products.MapPost("/", CreateProduct);
         products.MapPut("/{id:guid}", UpdateProduct);
         products.MapDelete("/{id:guid}", DeleteProduct);
 
-        var variants = app.MapGroup("/api/admin/variants").WithTags("Admin: Variants");
+        var variants = app.MapGroup("/api/admin/variants").WithTags("Admin: Variants").RequireAuthorization("Admin");
         variants.MapPut("/{id:guid}", UpdateVariant);
 
-        var collections = app.MapGroup("/api/admin/collections").WithTags("Admin: Collections");
+        var collections = app.MapGroup("/api/admin/collections").WithTags("Admin: Collections").RequireAuthorization("Admin");
         collections.MapGet("/", ListCollections);
         collections.MapPost("/", CreateCollection);
         collections.MapPut("/{id:guid}", UpdateCollection);

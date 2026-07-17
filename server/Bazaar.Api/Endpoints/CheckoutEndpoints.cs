@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Bazaar.Api.Auth;
 using Bazaar.Api.Contracts;
 using Bazaar.Api.Validation;
 using Bazaar.Infrastructure.Checkout;
@@ -15,7 +17,8 @@ public static class CheckoutEndpoints
         return app;
     }
 
-    private static async Task<IResult> Checkout(CheckoutService checkout, CheckoutRequest request, CancellationToken ct)
+    private static async Task<IResult> Checkout(
+        CheckoutService checkout, ClaimsPrincipal principal, CheckoutRequest request, CancellationToken ct)
     {
         var children = request.ShippingAddress is null
             ? Enumerable.Empty<(string, object)>()
@@ -24,7 +27,9 @@ public static class CheckoutEndpoints
         if (!RequestValidation.TryValidateGraph(request, children, out var errors))
             return Results.ValidationProblem(errors);
 
-        var command = new CheckoutCommand(request.CartToken!, request.Email!, request.ShippingAddress!.ToAddress(), request.DiscountCode);
+        var command = new CheckoutCommand(
+            request.CartToken!, request.Email!, request.ShippingAddress!.ToAddress(),
+            request.DiscountCode, principal.GetCustomerId());
         var outcome = await checkout.CheckoutAsync(command, ct);
 
         return outcome.Status switch

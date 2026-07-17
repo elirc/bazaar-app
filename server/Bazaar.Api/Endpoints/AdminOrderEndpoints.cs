@@ -14,7 +14,7 @@ public static class AdminOrderEndpoints
 
     public static IEndpointRouteBuilder MapAdminOrderEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/admin/orders").WithTags("Admin: Orders");
+        var group = app.MapGroup("/api/admin/orders").WithTags("Admin: Orders").RequireAuthorization("Admin");
         group.MapGet("/", ListOrders);
         group.MapGet("/{id:guid}", GetOrder);
         group.MapPost("/{id:guid}/transition", TransitionOrder);
