@@ -1,12 +1,26 @@
 using Bazaar.Domain.Carts;
 using Bazaar.Domain.Common;
+using Bazaar.Domain.Customers;
 using Bazaar.Domain.Discounts;
 using Bazaar.Domain.Orders;
+using Bazaar.Domain.Shipping;
 
 namespace Bazaar.Api.Contracts;
 
 public static class CommerceMappings
 {
+    public static ShippingOptionDto ToOptionDto(this ShippingMethod method, Money cost) => new(
+        method.Code,
+        method.Name,
+        method.RateType.ToString(),
+        cost.ToDto(),
+        method.DeliveryEstimate,
+        method.MinDays,
+        method.MaxDays);
+
+    public static CustomerAddressDto ToDto(this CustomerAddress address) =>
+        new(address.Id, address.Label, address.IsDefault, address.Address.ToDto());
+
     public static DiscountDto ToDto(this DiscountCode code) => new(
         code.Id,
         code.Code,
@@ -79,6 +93,7 @@ public static class CommerceMappings
         order.ShippingTotal.ToDto(),
         order.GrandTotal.ToDto(),
         order.DiscountCode,
+        order.ShippingMethod,
         order.Items.Select(li => new OrderLineDto(li.Sku, li.Title, li.Quantity, li.UnitPrice.ToDto(), li.LineTotal.ToDto())).ToList(),
         order.PlacedAt);
 

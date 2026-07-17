@@ -12,6 +12,10 @@ public class ProductVariant
     public string Sku { get; set; } = string.Empty;
     public string Title { get; set; } = "Default";
     public Money Price { get; set; } = Money.Zero();
+
+    /// <summary>Shipping weight in grams; drives weight-based shipping methods. Zero when unspecified.</summary>
+    public int WeightGrams { get; set; }
+
     public int Position { get; set; }
 
     public IReadOnlyList<VariantOption> Options => _options;

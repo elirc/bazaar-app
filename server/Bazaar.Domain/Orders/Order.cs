@@ -27,6 +27,9 @@ public class Order
 
     public string? DiscountCode { get; set; }
 
+    /// <summary>Display name of the chosen shipping method (e.g. "Standard").</summary>
+    public string? ShippingMethod { get; set; }
+
     public DateTimeOffset PlacedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 

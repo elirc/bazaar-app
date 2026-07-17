@@ -1,5 +1,6 @@
 import { apiRequest } from './client'
-import type { AuthResponse, CurrentUser, Order, OrderSummary } from './types'
+import type { AuthResponse, CurrentUser, CustomerAddress, Order, OrderSummary } from './types'
+import type { AddressInput } from './cart'
 
 export interface RegisterBody {
   email: string
@@ -31,4 +32,26 @@ export function listAccountOrders(signal?: AbortSignal) {
 
 export function getAccountOrder(id: string, signal?: AbortSignal) {
   return apiRequest<Order>(`/api/account/orders/${id}`, { signal })
+}
+
+export interface UpsertAddressBody {
+  label?: string
+  isDefault: boolean
+  address: AddressInput
+}
+
+export function listAddresses(signal?: AbortSignal) {
+  return apiRequest<CustomerAddress[]>('/api/account/addresses', { signal })
+}
+
+export function createAddress(body: UpsertAddressBody) {
+  return apiRequest<CustomerAddress>('/api/account/addresses', { method: 'POST', body })
+}
+
+export function updateAddress(id: string, body: UpsertAddressBody) {
+  return apiRequest<CustomerAddress>(`/api/account/addresses/${id}`, { method: 'PUT', body })
+}
+
+export function deleteAddress(id: string) {
+  return apiRequest<void>(`/api/account/addresses/${id}`, { method: 'DELETE' })
 }

@@ -23,6 +23,7 @@ export interface Variant {
   position: number
   options: VariantOption[]
   available: number
+  weightGrams: number
 }
 
 export interface ProductImage {
@@ -124,8 +125,26 @@ export interface Order {
   shippingTotal: Money
   grandTotal: Money
   discountCode: string | null
+  shippingMethod: string | null
   items: OrderLine[]
   placedAt: string
+}
+
+export interface ShippingOption {
+  code: string
+  name: string
+  rateType: string
+  cost: Money
+  deliveryEstimate: string
+  minDays: number
+  maxDays: number
+}
+
+export interface CustomerAddress {
+  id: string
+  label: string | null
+  isDefault: boolean
+  address: Address
 }
 
 export interface OrderSummary {

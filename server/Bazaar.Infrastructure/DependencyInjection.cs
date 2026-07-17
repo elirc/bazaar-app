@@ -20,7 +20,6 @@ public static class DependencyInjection
 
         services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
         services.AddSingleton<ITaxCalculator, FlatRateTaxCalculator>();
-        services.AddSingleton<IShippingCalculator, ThresholdShippingCalculator>();
         services.AddScoped<CheckoutService>();
 
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();

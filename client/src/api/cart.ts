@@ -1,5 +1,12 @@
 import { apiRequest } from './client'
-import type { Cart, DiscountPreview, Order } from './types'
+import type { Cart, DiscountPreview, Order, ShippingOption } from './types'
+
+export function getShippingOptions(cartToken: string, signal?: AbortSignal) {
+  return apiRequest<ShippingOption[]>('/api/checkout/shipping-options', {
+    query: { cartToken },
+    signal,
+  })
+}
 
 export function previewDiscount(code: string, subtotal: number, currency: string, signal?: AbortSignal) {
   return apiRequest<DiscountPreview>(`/api/storefront/discounts/${encodeURIComponent(code)}`, {
@@ -49,6 +56,7 @@ export interface CheckoutBody {
   email: string
   shippingAddress: AddressInput
   discountCode?: string
+  shippingMethodCode?: string
 }
 
 export function checkout(body: CheckoutBody) {

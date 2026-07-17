@@ -1,8 +1,8 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useCart } from '../../cart/CartContext'
-import { checkout, previewDiscount } from '../../api/cart'
+import { checkout, getShippingOptions, previewDiscount } from '../../api/cart'
 import { ApiError } from '../../api/client'
 import { formatMoney } from '../../lib/format'
 import type { DiscountPreview } from '../../api/types'
@@ -22,6 +22,20 @@ export default function CheckoutPage() {
 
   const [discountInput, setDiscountInput] = useState('')
   const [discount, setDiscount] = useState<DiscountPreview | null>(null)
+  const [shippingCode, setShippingCode] = useState<string | null>(null)
+
+  const shippingQuery = useQuery({
+    queryKey: ['shipping-options', cart?.token],
+    queryFn: ({ signal }) => getShippingOptions(cart!.token, signal),
+    enabled: Boolean(cart?.token),
+  })
+
+  // Default to the first available shipping method once options load.
+  useEffect(() => {
+    if (!shippingCode && shippingQuery.data && shippingQuery.data.length > 0) {
+      setShippingCode(shippingQuery.data[0].code)
+    }
+  }, [shippingQuery.data, shippingCode])
 
   const applyDiscount = useMutation({
     mutationFn: () => previewDiscount(discountInput.trim(), cart!.subtotal.amount, cart!.subtotal.currency),
@@ -34,6 +48,7 @@ export default function CheckoutPage() {
         cartToken: cart!.token,
         email,
         discountCode: discount?.valid ? discount.code : undefined,
+        shippingMethodCode: shippingCode ?? undefined,
         shippingAddress: {
           name,
           line1,
@@ -135,6 +150,27 @@ export default function CheckoutPage() {
           <div className="checkout__subtotal">
             <span>Subtotal</span>
             <strong>{formatMoney(cart.subtotal)}</strong>
+          </div>
+
+          <div className="checkout__shipping">
+            <h3>Shipping method</h3>
+            {shippingQuery.isLoading && <p className="muted">Loading options…</p>}
+            {shippingQuery.data?.map((option) => (
+              <label key={option.code} className="shipping-option">
+                <input
+                  type="radio"
+                  name="shipping-method"
+                  value={option.code}
+                  checked={shippingCode === option.code}
+                  onChange={() => setShippingCode(option.code)}
+                />
+                <span className="shipping-option__name">
+                  {option.name}
+                  <small className="muted"> · {option.deliveryEstimate}</small>
+                </span>
+                <span className="shipping-option__cost">{formatMoney(option.cost)}</span>
+              </label>
+            ))}
           </div>
 
           <div className="checkout__discount">

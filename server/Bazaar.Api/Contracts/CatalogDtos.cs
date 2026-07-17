@@ -21,7 +21,8 @@ public sealed record VariantDto(
     MoneyDto Price,
     int Position,
     IReadOnlyList<VariantOptionDto> Options,
-    int Available);
+    int Available,
+    int WeightGrams);
 
 public sealed record VariantOptionDto(string Name, string Value);
 
@@ -77,6 +78,9 @@ public sealed record VariantInput
 
     [Range(0, 1_000_000)]
     public int StockOnHand { get; init; }
+
+    [Range(0, 1_000_000)]
+    public int WeightGrams { get; init; }
 
     public List<VariantOptionInput> Options { get; init; } = new();
 }
@@ -147,6 +151,9 @@ public sealed record UpdateVariantRequest
 
     [Range(0, 1_000_000)]
     public int? StockOnHand { get; init; }
+
+    [Range(0, 1_000_000)]
+    public int? WeightGrams { get; init; }
 }
 
 public sealed record UpsertCollectionRequest

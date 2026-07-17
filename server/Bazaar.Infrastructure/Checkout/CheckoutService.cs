@@ -4,6 +4,7 @@ using Bazaar.Domain.Common;
 using Bazaar.Domain.Discounts;
 using Bazaar.Domain.Orders;
 using Bazaar.Domain.Payments;
+using Bazaar.Domain.Shipping;
 using Bazaar.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,7 +15,8 @@ public sealed record CheckoutCommand(
     string Email,
     Address ShippingAddress,
     string? DiscountCode = null,
-    Guid? CustomerId = null);
+    Guid? CustomerId = null,
+    string? ShippingMethodCode = null);
 
 public enum CheckoutStatus
 {
@@ -23,6 +25,7 @@ public enum CheckoutStatus
     CartEmpty,
     InsufficientStock,
     InvalidDiscount,
+    InvalidShippingMethod,
     PaymentDeclined,
 }
 
@@ -41,18 +44,15 @@ public sealed class CheckoutService
     private readonly BazaarDbContext _db;
     private readonly IPaymentGateway _gateway;
     private readonly ITaxCalculator _tax;
-    private readonly IShippingCalculator _shipping;
 
     public CheckoutService(
         BazaarDbContext db,
         IPaymentGateway gateway,
-        ITaxCalculator tax,
-        IShippingCalculator shipping)
+        ITaxCalculator tax)
     {
         _db = db;
         _gateway = gateway;
         _tax = tax;
-        _shipping = shipping;
     }
 
     public async Task<CheckoutOutcome> CheckoutAsync(CheckoutCommand command, CancellationToken ct = default)
@@ -91,7 +91,24 @@ public sealed class CheckoutService
             (acc, i) => acc.Add(i.Variant!.Price.MultiplyBy(i.Quantity)));
         var itemCount = cart.Items.Sum(i => i.Quantity);
         var tax = _tax.CalculateTax(subtotal);
-        var shipping = _shipping.CalculateShipping(subtotal, itemCount);
+
+        // Resolve the shipping method (requested code, else the default) and price it.
+        var methods = await _db.ShippingMethods.Where(m => m.IsActive).ToListAsync(ct);
+        ShippingMethod? method;
+        if (!string.IsNullOrWhiteSpace(command.ShippingMethodCode))
+        {
+            var code = command.ShippingMethodCode.Trim().ToLowerInvariant();
+            method = methods.FirstOrDefault(m => m.Code == code);
+            if (method is null)
+                return CheckoutOutcome.Fail(CheckoutStatus.InvalidShippingMethod, "That shipping method is not available.");
+        }
+        else
+        {
+            method = methods.FirstOrDefault(m => m.IsDefault) ?? methods.OrderBy(m => m.DisplayOrder).FirstOrDefault();
+        }
+
+        var totalWeightGrams = cart.Items.Sum(i => i.Variant!.WeightGrams * i.Quantity);
+        var shipping = method?.CalculateCost(subtotal, itemCount, totalWeightGrams) ?? Money.Zero(currency);
 
         var discount = Money.Zero(currency);
         DiscountCode? appliedCode = null;
@@ -120,6 +137,7 @@ public sealed class CheckoutService
             ShippingTotal = shipping,
             GrandTotal = grandTotal,
             DiscountCode = appliedCode?.Code,
+            ShippingMethod = method?.Name,
         };
 
         foreach (var item in cart.Items)

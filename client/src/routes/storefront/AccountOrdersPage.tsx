@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { listAccountOrders } from '../../api/auth'
 import { useAuth } from '../../auth/AuthContext'
 import { formatMoney } from '../../lib/format'
+import AddressBook from '../../components/AddressBook'
 
 export default function AccountOrdersPage() {
   const { isAuthenticated, isLoading, user } = useAuth()
@@ -42,6 +43,8 @@ export default function AccountOrdersPage() {
           </tbody>
         </table>
       )}
+
+      <AddressBook />
     </section>
   )
 }

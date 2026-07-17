@@ -14,7 +14,8 @@ public static class CatalogMappings
         variant.Price.ToDto(),
         variant.Position,
         variant.Options.Select(o => new VariantOptionDto(o.Name, o.Value)).ToList(),
-        available);
+        available,
+        variant.WeightGrams);
 
     public static ProductDetailDto ToDetailDto(this Product product, IReadOnlyDictionary<Guid, int> stockByVariant) => new(
         product.Id,

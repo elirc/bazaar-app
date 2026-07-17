@@ -121,6 +121,7 @@ public static class AdminCatalogEndpoints
                 Sku = input.Sku!,
                 Title = string.IsNullOrWhiteSpace(input.Title) ? "Default" : input.Title!,
                 Price = new Money(input.Price!.Value, input.Currency ?? Money.DefaultCurrency),
+                WeightGrams = input.WeightGrams,
                 Position = position++,
             };
             foreach (var option in input.Options)
@@ -208,6 +209,8 @@ public static class AdminCatalogEndpoints
         if (!string.IsNullOrWhiteSpace(request.Title))
             variant.Title = request.Title!;
         variant.Price = new Money(request.Price!.Value, request.Currency ?? variant.Price.Currency);
+        if (request.WeightGrams is { } weight)
+            variant.WeightGrams = weight;
 
         var inventory = await db.InventoryItems.FirstOrDefaultAsync(i => i.VariantId == id, ct);
         if (request.StockOnHand is { } onHand)
