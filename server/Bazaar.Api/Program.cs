@@ -1,3 +1,4 @@
+using Bazaar.Api;
 using Bazaar.Api.Endpoints;
 using Bazaar.Infrastructure;
 using Bazaar.Infrastructure.Persistence;
@@ -6,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddCors(options =>
 {
@@ -19,6 +21,7 @@ builder.Services.AddBazaarInfrastructure(connectionString);
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
 app.UseCors();
 
 // Apply migrations and seed the development catalog on startup.
