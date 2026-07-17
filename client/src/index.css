@@ -1,0 +1,166 @@
+:root {
+  --text: #4b5563;
+  --text-h: #0b0d12;
+  --bg: #ffffff;
+  --panel: #f9fafb;
+  --border: #e5e7eb;
+  --accent: #6d28d9;
+  --accent-contrast: #ffffff;
+  --danger: #b91c1c;
+  --ok: #047857;
+
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 16px/1.5 var(--sans);
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #9ca3af;
+    --text-h: #f3f4f6;
+    --bg: #14161c;
+    --panel: #1c1f27;
+    --border: #2e303a;
+    --accent: #a78bfa;
+    --accent-contrast: #14161c;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--text-h);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* Storefront */
+.storefront {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+}
+.storefront__header,
+.storefront__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.storefront__footer {
+  border-top: 1px solid var(--border);
+  border-bottom: none;
+  color: var(--text);
+  font-size: 14px;
+}
+.storefront__nav {
+  display: flex;
+  gap: 20px;
+}
+.storefront__main {
+  flex: 1;
+  padding: 32px 24px;
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+}
+.brand {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+/* Admin */
+.admin {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100svh;
+}
+.admin__sidebar {
+  border-right: 1px solid var(--border);
+  background: var(--panel);
+  padding: 24px 20px;
+}
+.admin__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+.admin__main {
+  padding: 32px;
+}
+@media (max-width: 720px) {
+  .admin {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Shared bits */
+.api-status {
+  margin-top: 24px;
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--text);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th,
+td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+th {
+  color: var(--text-h);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+button,
+.button {
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text-h);
+  border-radius: 6px;
+  padding: 8px 14px;
+}
+button.primary,
+.button.primary {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
