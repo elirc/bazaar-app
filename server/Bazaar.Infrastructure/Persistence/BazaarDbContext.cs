@@ -6,6 +6,7 @@ using Bazaar.Domain.Customers;
 using Bazaar.Domain.Discounts;
 using Bazaar.Domain.Inventory;
 using Bazaar.Domain.Orders;
+using Bazaar.Domain.Shipping;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -25,7 +26,9 @@ public class BazaarDbContext : DbContext
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<CustomerAddress> CustomerAddresses => Set<CustomerAddress>();
     public DbSet<DiscountCode> DiscountCodes => Set<DiscountCode>();
+    public DbSet<ShippingMethod> ShippingMethods => Set<ShippingMethod>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -39,6 +42,7 @@ public class BazaarDbContext : DbContext
         configurationBuilder.Properties<CartStatus>().HaveConversion<string>().HaveMaxLength(20);
         configurationBuilder.Properties<DiscountType>().HaveConversion<string>().HaveMaxLength(20);
         configurationBuilder.Properties<CustomerRole>().HaveConversion<string>().HaveMaxLength(20);
+        configurationBuilder.Properties<ShippingRateType>().HaveConversion<string>().HaveMaxLength(20);
     }
 
     protected override void OnModelCreating(ModelBuilder b)
@@ -153,6 +157,37 @@ public class BazaarDbContext : DbContext
             e.Ignore(c => c.DisplayName);
         });
 
+        b.Entity<CustomerAddress>(e =>
+        {
+            e.HasKey(a => a.Id);
+            e.HasIndex(a => a.CustomerId);
+            e.Property(a => a.Label).HasMaxLength(60);
+            e.OwnsOne(a => a.Address, ab =>
+            {
+                ab.Property(x => x.Name).IsRequired().HasMaxLength(200);
+                ab.Property(x => x.Line1).IsRequired().HasMaxLength(200);
+                ab.Property(x => x.Line2).HasMaxLength(200);
+                ab.Property(x => x.City).IsRequired().HasMaxLength(120);
+                ab.Property(x => x.Region).HasMaxLength(120);
+                ab.Property(x => x.PostalCode).IsRequired().HasMaxLength(20);
+                ab.Property(x => x.Country).IsRequired().HasMaxLength(2);
+            });
+            e.Navigation(a => a.Address).IsRequired();
+        });
+
+        b.Entity<ShippingMethod>(e =>
+        {
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Code).IsRequired().HasMaxLength(40);
+            e.HasIndex(s => s.Code).IsUnique();
+            e.Property(s => s.Name).IsRequired().HasMaxLength(120);
+            e.Property(s => s.PerKgRate).HasPrecision(18, 2);
+            e.Property(s => s.FreeThreshold).HasPrecision(18, 2);
+            e.OwnsOne(s => s.BaseRate, mb => MapMoney(mb, "BaseRate"));
+            e.Navigation(s => s.BaseRate).IsRequired();
+            e.Ignore(s => s.DeliveryEstimate);
+        });
+
         b.Entity<DiscountCode>(e =>
         {
             e.HasKey(d => d.Id);
@@ -171,6 +206,7 @@ public class BazaarDbContext : DbContext
             e.Property(o => o.Email).IsRequired().HasMaxLength(320);
             e.Property(o => o.Currency).IsRequired().HasMaxLength(3);
             e.Property(o => o.DiscountCode).HasMaxLength(60);
+            e.Property(o => o.ShippingMethod).HasMaxLength(120);
 
             e.OwnsOne(o => o.ShippingAddress, ab =>
             {

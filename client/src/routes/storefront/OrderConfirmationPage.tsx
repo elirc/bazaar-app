@@ -47,7 +47,10 @@ export default function OrderConfirmationPage() {
           <div><span>Discount</span><span>−{formatMoney(order.discountTotal)}</span></div>
         )}
         <div><span>Tax</span><span>{formatMoney(order.taxTotal)}</span></div>
-        <div><span>Shipping</span><span>{formatMoney(order.shippingTotal)}</span></div>
+        <div>
+          <span>Shipping{order.shippingMethod ? ` (${order.shippingMethod})` : ''}</span>
+          <span>{formatMoney(order.shippingTotal)}</span>
+        </div>
         <div className="order-totals__grand"><span>Total</span><strong>{formatMoney(order.grandTotal)}</strong></div>
       </div>
 

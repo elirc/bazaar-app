@@ -24,7 +24,7 @@ public static class CatalogSeeder
 
         Product Build(
             string slug, string title, string description, string? vendor,
-            string imageUrl, IEnumerable<Collection> collections,
+            string imageUrl, int weightGrams, IEnumerable<Collection> collections,
             IEnumerable<(string sku, string variantTitle, decimal price, int stock, (string name, string value)[] options)> variants)
         {
             var product = new Product
@@ -45,6 +45,7 @@ public static class CatalogSeeder
                     Sku = sku,
                     Title = variantTitle,
                     Price = new Money(price, Money.DefaultCurrency),
+                    WeightGrams = weightGrams,
                     Position = position++,
                 };
                 foreach (var (name, value) in options)
@@ -62,7 +63,7 @@ public static class CatalogSeeder
         var products = new[]
         {
             Build("classic-tee", "Classic Cotton Tee", "A soft, breathable everyday t-shirt.", "Bazaar Basics",
-                "https://images.bazaar.test/classic-tee.jpg", new[] { apparel },
+                "https://images.bazaar.test/classic-tee.jpg", 200, new[] { apparel },
                 new[]
                 {
                     ("TEE-S-BLK", "Small / Black", 19.99m, 40, new[] { ("Size", "Small"), ("Color", "Black") }),
@@ -70,35 +71,35 @@ public static class CatalogSeeder
                     ("TEE-L-WHT", "Large / White", 19.99m, 30, new[] { ("Size", "Large"), ("Color", "White") }),
                 }),
             Build("merino-hoodie", "Merino Wool Hoodie", "Temperature-regulating merino, built to last.", "Northwind Apparel",
-                "https://images.bazaar.test/merino-hoodie.jpg", new[] { apparel },
+                "https://images.bazaar.test/merino-hoodie.jpg", 600, new[] { apparel },
                 new[]
                 {
                     ("HOOD-M-GRY", "Medium / Grey", 89.00m, 20, new[] { ("Size", "Medium"), ("Color", "Grey") }),
                     ("HOOD-L-GRY", "Large / Grey", 89.00m, 18, new[] { ("Size", "Large"), ("Color", "Grey") }),
                 }),
             Build("leather-belt", "Full-Grain Leather Belt", "Hand-finished full-grain leather with a brass buckle.", "Atlas Goods",
-                "https://images.bazaar.test/leather-belt.jpg", new[] { accessories },
+                "https://images.bazaar.test/leather-belt.jpg", 300, new[] { accessories },
                 new[]
                 {
                     ("BELT-32", "32 inch", 45.50m, 25, new[] { ("Size", "32") }),
                     ("BELT-34", "34 inch", 45.50m, 22, new[] { ("Size", "34") }),
                 }),
             Build("canvas-tote", "Canvas Market Tote", "A roomy, sturdy tote for the weekend market.", "Bazaar Basics",
-                "https://images.bazaar.test/canvas-tote.jpg", new[] { accessories, homeGoods },
+                "https://images.bazaar.test/canvas-tote.jpg", 400, new[] { accessories, homeGoods },
                 new[]
                 {
                     ("TOTE-NAT", "Natural", 24.00m, 60, new[] { ("Color", "Natural") }),
                     ("TOTE-OLV", "Olive", 24.00m, 35, new[] { ("Color", "Olive") }),
                 }),
             Build("ceramic-mug", "Stoneware Coffee Mug", "A 12oz stoneware mug with a comfortable handle.", "Kiln & Co",
-                "https://images.bazaar.test/ceramic-mug.jpg", new[] { homeGoods },
+                "https://images.bazaar.test/ceramic-mug.jpg", 450, new[] { homeGoods },
                 new[]
                 {
                     ("MUG-CRM", "Cream", 14.00m, 80, new[] { ("Color", "Cream") }),
                     ("MUG-SLT", "Slate", 14.00m, 12, new[] { ("Color", "Slate") }),
                 }),
             Build("wool-blanket", "Chunky Wool Throw", "A cozy hand-loomed wool throw blanket.", "Northwind Apparel",
-                "https://images.bazaar.test/wool-blanket.jpg", new[] { homeGoods },
+                "https://images.bazaar.test/wool-blanket.jpg", 1500, new[] { homeGoods },
                 new[]
                 {
                     ("BLNK-OAT", "Oatmeal", 120.00m, 8, new[] { ("Color", "Oatmeal") }),

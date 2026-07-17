@@ -36,3 +36,16 @@ public enum CustomerRole
     Customer,
     Admin,
 }
+
+/// <summary>How a shipping method prices an order.</summary>
+public enum ShippingRateType
+{
+    /// <summary>A single flat fee regardless of cart contents.</summary>
+    Flat,
+
+    /// <summary>A base fee plus a per-kilogram surcharge on the cart weight.</summary>
+    Weight,
+
+    /// <summary>A flat fee that becomes free once the subtotal reaches a threshold.</summary>
+    FreeOverThreshold,
+}

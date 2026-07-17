@@ -63,6 +63,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<BazaarDbContext>();
     await db.Database.MigrateAsync();
     await CatalogSeeder.SeedAsync(db);
+    await ShippingSeeder.SeedAsync(db);
     await AccountSeeder.SeedAsync(db, scope.ServiceProvider.GetRequiredService<IPasswordHasher>());
 }
 
@@ -77,6 +78,7 @@ app.MapAdminOrderEndpoints();
 app.MapAdminDiscountEndpoints();
 app.MapCartEndpoints();
 app.MapCheckoutEndpoints();
+app.MapShippingEndpoints();
 
 app.Run();
 

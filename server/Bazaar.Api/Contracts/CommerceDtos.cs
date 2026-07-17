@@ -78,6 +78,7 @@ public sealed record OrderDto(
     MoneyDto ShippingTotal,
     MoneyDto GrandTotal,
     string? DiscountCode,
+    string? ShippingMethod,
     IReadOnlyList<OrderLineDto> Items,
     DateTimeOffset PlacedAt);
 
@@ -117,4 +118,7 @@ public sealed record CheckoutRequest
     public AddressInput? ShippingAddress { get; init; }
 
     public string? DiscountCode { get; init; }
+
+    /// <summary>Selected shipping method code; when omitted the default method is used.</summary>
+    public string? ShippingMethodCode { get; init; }
 }
