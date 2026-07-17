@@ -1,8 +1,11 @@
+using Bazaar.Api.Endpoints;
 using Bazaar.Infrastructure;
 using Bazaar.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddProblemDetails();
 
 builder.Services.AddCors(options =>
 {
@@ -28,6 +31,9 @@ using (var scope = app.Services.CreateScope())
 
 app.MapGet("/", () => "Bazaar API");
 app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "bazaar-api" }));
+
+app.MapStorefrontEndpoints();
+app.MapAdminCatalogEndpoints();
 
 app.Run();
 
