@@ -64,6 +64,7 @@ using (var scope = app.Services.CreateScope())
     await db.Database.MigrateAsync();
     await CatalogSeeder.SeedAsync(db);
     await ShippingSeeder.SeedAsync(db);
+    await TaxAndGiftCardSeeder.SeedAsync(db);
     await AccountSeeder.SeedAsync(db, scope.ServiceProvider.GetRequiredService<IPasswordHasher>());
 }
 
@@ -83,6 +84,7 @@ app.MapAdminReturnEndpoints();
 app.MapCartEndpoints();
 app.MapCheckoutEndpoints();
 app.MapShippingEndpoints();
+app.MapGiftCardEndpoints();
 
 app.Run();
 

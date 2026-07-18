@@ -30,6 +30,10 @@ public class Order
     /// <summary>Display name of the chosen shipping method (e.g. "Standard").</summary>
     public string? ShippingMethod { get; set; }
 
+    /// <summary>Gift-card tender applied to this order (the remainder is charged to the payment gateway).</summary>
+    public Money GiftCardTotal { get; set; } = Money.Zero();
+    public string? GiftCardCode { get; set; }
+
     public DateTimeOffset PlacedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 

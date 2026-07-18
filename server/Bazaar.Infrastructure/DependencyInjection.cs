@@ -1,10 +1,10 @@
-using Bazaar.Domain.Checkout;
 using Bazaar.Domain.Payments;
 using Bazaar.Infrastructure.Auth;
 using Bazaar.Infrastructure.Checkout;
 using Bazaar.Infrastructure.Payments;
 using Bazaar.Infrastructure.Persistence;
 using Bazaar.Infrastructure.Returns;
+using Bazaar.Infrastructure.Tax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,7 +20,7 @@ public static class DependencyInjection
         services.AddDbContext<BazaarDbContext>(options => options.UseSqlite(connectionString));
 
         services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
-        services.AddSingleton<ITaxCalculator, FlatRateTaxCalculator>();
+        services.AddScoped<ITaxService, ZoneTaxService>();
         services.AddScoped<CheckoutService>();
         services.AddScoped<ReturnService>();
 

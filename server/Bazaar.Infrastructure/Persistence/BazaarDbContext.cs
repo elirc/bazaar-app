@@ -4,11 +4,13 @@ using Bazaar.Domain.Catalog;
 using Bazaar.Domain.Common;
 using Bazaar.Domain.Customers;
 using Bazaar.Domain.Discounts;
+using Bazaar.Domain.GiftCards;
 using Bazaar.Domain.Inventory;
 using Bazaar.Domain.Orders;
 using Bazaar.Domain.Returns;
 using Bazaar.Domain.Reviews;
 using Bazaar.Domain.Shipping;
+using Bazaar.Domain.Tax;
 using Bazaar.Domain.Wishlists;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -38,6 +40,8 @@ public class BazaarDbContext : DbContext
     public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
     public DbSet<ReturnRequest> ReturnRequests => Set<ReturnRequest>();
     public DbSet<ReturnLine> ReturnLines => Set<ReturnLine>();
+    public DbSet<TaxZone> TaxZones => Set<TaxZone>();
+    public DbSet<GiftCard> GiftCards => Set<GiftCard>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -66,6 +70,7 @@ public class BazaarDbContext : DbContext
             e.Property(p => p.Title).IsRequired().HasMaxLength(200);
             e.Property(p => p.Description).HasMaxLength(4000);
             e.Property(p => p.Vendor).HasMaxLength(120);
+            e.Property(p => p.TaxCategory).IsRequired().HasMaxLength(40);
 
             e.HasMany(p => p.Variants)
                 .WithOne(v => v.Product!)
@@ -264,6 +269,38 @@ public class BazaarDbContext : DbContext
             e.Property(l => l.Title).IsRequired().HasMaxLength(200);
         });
 
+        b.Entity<TaxZone>(e =>
+        {
+            e.HasKey(z => z.Id);
+            e.Property(z => z.Name).IsRequired().HasMaxLength(120);
+            e.Property(z => z.Country).IsRequired().HasMaxLength(2);
+            e.Property(z => z.Region).HasMaxLength(120);
+            e.Property(z => z.StandardRate).HasPrecision(9, 5);
+            e.HasIndex(z => new { z.Country, z.Region });
+
+            e.OwnsMany(z => z.CategoryRates, rb =>
+            {
+                rb.ToTable("TaxCategoryRates");
+                rb.WithOwner().HasForeignKey("TaxZoneId");
+                rb.Property(r => r.Category).IsRequired().HasMaxLength(40);
+                rb.Property(r => r.Rate).HasPrecision(9, 5);
+                rb.HasKey("TaxZoneId", nameof(TaxCategoryRate.Category));
+            });
+            e.Navigation(z => z.CategoryRates).UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        b.Entity<GiftCard>(e =>
+        {
+            e.HasKey(g => g.Id);
+            e.Property(g => g.Code).IsRequired().HasMaxLength(40);
+            e.HasIndex(g => g.Code).IsUnique();
+            e.OwnsOne(g => g.InitialBalance, mb => MapMoney(mb, "Initial"));
+            e.OwnsOne(g => g.Balance, mb => MapMoney(mb, "Balance"));
+            e.Navigation(g => g.InitialBalance).IsRequired();
+            e.Navigation(g => g.Balance).IsRequired();
+            e.Ignore(g => g.IsRedeemable);
+        });
+
         b.Entity<DiscountCode>(e =>
         {
             e.HasKey(d => d.Id);
@@ -283,6 +320,7 @@ public class BazaarDbContext : DbContext
             e.Property(o => o.Currency).IsRequired().HasMaxLength(3);
             e.Property(o => o.DiscountCode).HasMaxLength(60);
             e.Property(o => o.ShippingMethod).HasMaxLength(120);
+            e.Property(o => o.GiftCardCode).HasMaxLength(40);
 
             e.OwnsOne(o => o.ShippingAddress, ab =>
             {
@@ -301,11 +339,13 @@ public class BazaarDbContext : DbContext
             e.OwnsOne(o => o.TaxTotal, mb => MapMoney(mb, "TaxTotal"));
             e.OwnsOne(o => o.ShippingTotal, mb => MapMoney(mb, "ShippingTotal"));
             e.OwnsOne(o => o.GrandTotal, mb => MapMoney(mb, "GrandTotal"));
+            e.OwnsOne(o => o.GiftCardTotal, mb => MapMoney(mb, "GiftCardTotal"));
             e.Navigation(o => o.Subtotal).IsRequired();
             e.Navigation(o => o.DiscountTotal).IsRequired();
             e.Navigation(o => o.TaxTotal).IsRequired();
             e.Navigation(o => o.ShippingTotal).IsRequired();
             e.Navigation(o => o.GrandTotal).IsRequired();
+            e.Navigation(o => o.GiftCardTotal).IsRequired();
 
             e.HasMany(o => o.Items)
                 .WithOne()

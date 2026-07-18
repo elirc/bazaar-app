@@ -54,7 +54,13 @@ export default function OrderConfirmationPage() {
           <span>Shipping{order.shippingMethod ? ` (${order.shippingMethod})` : ''}</span>
           <span>{formatMoney(order.shippingTotal)}</span>
         </div>
+        {(order.giftCardTotal?.amount ?? 0) > 0 && (
+          <div><span>Gift card{order.giftCardCode ? ` (${order.giftCardCode})` : ''}</span><span>−{formatMoney(order.giftCardTotal)}</span></div>
+        )}
         <div className="order-totals__grand"><span>Total</span><strong>{formatMoney(order.grandTotal)}</strong></div>
+        {(order.giftCardTotal?.amount ?? 0) > 0 && (
+          <div className="muted"><span>Charged to card</span><span>{formatMoney({ amount: order.grandTotal.amount - order.giftCardTotal.amount, currency: order.grandTotal.currency })}</span></div>
+        )}
       </div>
 
       {isAuthenticated && order.status === 'Fulfilled' && <ReturnRequestForm order={order} />}
