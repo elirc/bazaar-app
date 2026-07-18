@@ -63,6 +63,25 @@ export default function OrderConfirmationPage() {
         )}
       </div>
 
+      {order.shipments && order.shipments.length > 0 && (
+        <section className="tracking">
+          <h2>Tracking</h2>
+          <ul className="shipment-list">
+            {order.shipments.map((shipment) => (
+              <li key={shipment.id} data-testid="tracking-shipment">
+                <strong>{shipment.carrier}</strong> — {shipment.trackingNumber}
+                <span className="muted"> · shipped {new Date(shipment.shippedAt).toLocaleDateString()}</span>
+                <ul>
+                  {shipment.lines.map((line) => (
+                    <li key={line.orderLineItemId} className="muted">{line.title} × {line.quantity}</li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {isAuthenticated && order.status === 'Fulfilled' && <ReturnRequestForm order={order} />}
 
       <Link to="/" className="button">Continue shopping</Link>

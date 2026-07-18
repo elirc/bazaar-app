@@ -48,7 +48,14 @@ public class ReturnsTests : IClassFixture<BazaarApiFactory>
 
     private async Task Fulfill(HttpClient admin, Guid orderId)
     {
-        var response = await admin.PostAsJsonAsync($"/api/admin/orders/{orderId}/transition", new TransitionOrderRequest { Status = "Fulfilled" });
+        // A full shipment drives the order to Fulfilled (fulfillment is shipment-derived).
+        var order = await admin.GetFromJsonAsync<OrderDto>($"/api/admin/orders/{orderId}");
+        var response = await admin.PostAsJsonAsync($"/api/admin/orders/{orderId}/shipments", new CreateShipmentRequest
+        {
+            Carrier = "UPS",
+            TrackingNumber = "1Z-TEST",
+            Lines = order!.Items.Select(li => new CreateShipmentLineInput { OrderLineItemId = li.Id, Quantity = li.Quantity }).ToList(),
+        });
         response.EnsureSuccessStatusCode();
     }
 

@@ -2,6 +2,7 @@ using Bazaar.Api.Contracts;
 using Bazaar.Api.Validation;
 using Bazaar.Domain;
 using Bazaar.Domain.Orders;
+using Bazaar.Infrastructure.Fulfillment;
 using Bazaar.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,7 +19,35 @@ public static class AdminOrderEndpoints
         group.MapGet("/", ListOrders);
         group.MapGet("/{id:guid}", GetOrder);
         group.MapPost("/{id:guid}/transition", TransitionOrder);
+        group.MapPost("/{id:guid}/shipments", CreateShipment);
         return app;
+    }
+
+    internal static Task<List<Shipment>> LoadShipments(BazaarDbContext db, Guid orderId, CancellationToken ct) =>
+        db.Shipments.AsNoTracking().Include(s => s.Lines).Where(s => s.OrderId == orderId).ToListAsync(ct);
+
+    private static async Task<IResult> CreateShipment(
+        BazaarDbContext db, FulfillmentService fulfillment, Guid id, CreateShipmentRequest request, CancellationToken ct)
+    {
+        if (!RequestValidation.TryValidate(request, out var errors))
+            return Results.ValidationProblem(errors);
+
+        var command = new CreateShipmentCommand(
+            id, request.Carrier!, request.TrackingNumber!,
+            request.Lines.Select(l => new ShipmentLineCommand(l.OrderLineItemId!.Value, l.Quantity)).ToList());
+        var outcome = await fulfillment.CreateShipmentAsync(command, ct);
+
+        if (outcome.Status != ShipmentCreateStatus.Ok)
+            return outcome.Status switch
+            {
+                ShipmentCreateStatus.OrderNotFound => Results.NotFound(),
+                ShipmentCreateStatus.NotShippable => Results.Problem(outcome.Detail, statusCode: StatusCodes.Status409Conflict, title: "Order not shippable"),
+                ShipmentCreateStatus.OverShipment => Results.Problem(outcome.Detail, statusCode: StatusCodes.Status409Conflict, title: "Over-shipment"),
+                _ => Results.Problem(outcome.Detail, statusCode: StatusCodes.Status400BadRequest, title: "Invalid shipment"),
+            };
+
+        var shipments = await LoadShipments(db, id, ct);
+        return Results.Created($"/api/admin/orders/{id}", outcome.Order!.ToDto(shipments));
     }
 
     private static async Task<IResult> ListOrders(
@@ -55,7 +84,9 @@ public static class AdminOrderEndpoints
     private static async Task<IResult> GetOrder(BazaarDbContext db, Guid id, CancellationToken ct)
     {
         var order = await db.Orders.AsNoTracking().Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == id, ct);
-        return order is null ? Results.NotFound() : Results.Ok(order.ToDto());
+        if (order is null) return Results.NotFound();
+        var shipments = await LoadShipments(db, id, ct);
+        return Results.Ok(order.ToDto(shipments));
     }
 
     private static async Task<IResult> TransitionOrder(

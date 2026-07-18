@@ -104,8 +104,10 @@ public static class AccountEndpoints
         var order = await db.Orders.AsNoTracking()
             .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.Id == id && o.CustomerId == customerId, ct);
+        if (order is null) return Results.NotFound();
 
-        return order is null ? Results.NotFound() : Results.Ok(order.ToDto());
+        var shipments = await AdminOrderEndpoints.LoadShipments(db, id, ct);
+        return Results.Ok(order.ToDto(shipments));
     }
 
     // ---- Address book ----

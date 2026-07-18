@@ -51,6 +51,8 @@ public static class CheckoutEndpoints
         var order = await db.Orders.AsNoTracking()
             .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.Id == id, ct);
-        return order is null ? Results.NotFound() : Results.Ok(order.ToDto());
+        if (order is null) return Results.NotFound();
+        var shipments = await AdminOrderEndpoints.LoadShipments(db, id, ct);
+        return Results.Ok(order.ToDto(shipments));
     }
 }

@@ -14,11 +14,15 @@ public enum CartStatus
     Abandoned,
 }
 
-/// <summary>Order lifecycle: Pending -> Paid -> Fulfilled, with Cancelled/Refunded terminal states.</summary>
+/// <summary>
+/// Order lifecycle: Pending -> Paid -> (PartiallyFulfilled) -> Fulfilled, with Cancelled/Refunded
+/// terminal states. PartiallyFulfilled/Fulfilled are derived from shipment coverage, not set manually.
+/// </summary>
 public enum OrderStatus
 {
     Pending,
     Paid,
+    PartiallyFulfilled,
     Fulfilled,
     Cancelled,
     Refunded,

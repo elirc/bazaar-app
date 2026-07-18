@@ -113,9 +113,17 @@ public class OrdersAndDiscountsTests : IClassFixture<BazaarApiFactory>, IAsyncLi
 
         Assert.Equal(startStock - 2, await Available("leather-belt", "BELT-34"));
 
-        var fulfilled = await _client.PostAsJsonAsync($"/api/admin/orders/{order!.Id}/transition",
-            new TransitionOrderRequest { Status = "Fulfilled" });
-        Assert.Equal(HttpStatusCode.OK, fulfilled.StatusCode);
+        // Fulfillment is driven by shipments: a full shipment moves the order to Fulfilled.
+        var shipment = await _client.PostAsJsonAsync($"/api/admin/orders/{order!.Id}/shipments",
+            new CreateShipmentRequest
+            {
+                Carrier = "UPS",
+                TrackingNumber = "1Z-TEST",
+                Lines = order.Items.Select(li => new CreateShipmentLineInput { OrderLineItemId = li.Id, Quantity = li.Quantity }).ToList(),
+            });
+        Assert.Equal(HttpStatusCode.Created, shipment.StatusCode);
+        var shipped = await shipment.Content.ReadFromJsonAsync<OrderDto>();
+        Assert.Equal("Fulfilled", shipped!.Status);
 
         var refunded = await (await _client.PostAsJsonAsync($"/api/admin/orders/{order.Id}/transition",
             new TransitionOrderRequest { Status = "Refunded" })).Content.ReadFromJsonAsync<OrderDto>();

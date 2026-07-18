@@ -50,8 +50,12 @@ public class DomainBehaviorTests
     [Theory]
     [InlineData(OrderStatus.Pending, OrderStatus.Paid, true)]
     [InlineData(OrderStatus.Pending, OrderStatus.Fulfilled, false)]
-    [InlineData(OrderStatus.Paid, OrderStatus.Fulfilled, true)]
+    [InlineData(OrderStatus.Paid, OrderStatus.Fulfilled, false)]   // fulfillment is shipment-driven, not a manual move
     [InlineData(OrderStatus.Paid, OrderStatus.Refunded, true)]
+    [InlineData(OrderStatus.Paid, OrderStatus.Cancelled, true)]
+    [InlineData(OrderStatus.PartiallyFulfilled, OrderStatus.Cancelled, false)] // cancellation blocked once shipped
+    [InlineData(OrderStatus.PartiallyFulfilled, OrderStatus.Refunded, true)]
+    [InlineData(OrderStatus.Fulfilled, OrderStatus.Refunded, true)]
     [InlineData(OrderStatus.Fulfilled, OrderStatus.Paid, false)]
     [InlineData(OrderStatus.Cancelled, OrderStatus.Paid, false)]
     public void Order_transitions_follow_the_lifecycle(OrderStatus from, OrderStatus to, bool allowed)

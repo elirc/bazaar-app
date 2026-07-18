@@ -206,6 +206,22 @@ export interface Order {
   giftCardCode: string | null
   items: OrderLine[]
   placedAt: string
+  shipments: Shipment[]
+}
+
+export interface ShipmentLine {
+  orderLineItemId: string
+  sku: string
+  title: string
+  quantity: number
+}
+
+export interface Shipment {
+  id: string
+  carrier: string
+  trackingNumber: string
+  shippedAt: string
+  lines: ShipmentLine[]
 }
 
 export interface GiftCard {

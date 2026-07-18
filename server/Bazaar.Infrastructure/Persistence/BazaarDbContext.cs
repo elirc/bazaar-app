@@ -42,6 +42,8 @@ public class BazaarDbContext : DbContext
     public DbSet<ReturnLine> ReturnLines => Set<ReturnLine>();
     public DbSet<TaxZone> TaxZones => Set<TaxZone>();
     public DbSet<GiftCard> GiftCards => Set<GiftCard>();
+    public DbSet<Shipment> Shipments => Set<Shipment>();
+    public DbSet<ShipmentLine> ShipmentLines => Set<ShipmentLine>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -363,6 +365,26 @@ public class BazaarDbContext : DbContext
             e.OwnsOne(li => li.LineTotal, mb => MapMoney(mb, "LineTotal"));
             e.Navigation(li => li.UnitPrice).IsRequired();
             e.Navigation(li => li.LineTotal).IsRequired();
+        });
+
+        b.Entity<Shipment>(e =>
+        {
+            e.HasKey(s => s.Id);
+            e.HasIndex(s => s.OrderId);
+            e.Property(s => s.Carrier).IsRequired().HasMaxLength(80);
+            e.Property(s => s.TrackingNumber).IsRequired().HasMaxLength(120);
+            e.HasMany(s => s.Lines)
+                .WithOne()
+                .HasForeignKey(l => l.ShipmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.Navigation(s => s.Lines).UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        b.Entity<ShipmentLine>(e =>
+        {
+            e.HasKey(l => l.Id);
+            e.Property(l => l.Sku).IsRequired().HasMaxLength(80);
+            e.Property(l => l.Title).IsRequired().HasMaxLength(200);
         });
 
         // Guid primary keys are assigned by the domain (in entity initializers), not by the store.
