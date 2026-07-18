@@ -6,6 +6,7 @@ using Bazaar.Infrastructure.Payments;
 using Bazaar.Infrastructure.Persistence;
 using Bazaar.Infrastructure.Returns;
 using Bazaar.Infrastructure.Tax;
+using Bazaar.Infrastructure.Webhooks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -28,6 +29,9 @@ public static class DependencyInjection
 
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
+
+        services.AddSingleton<IWebhookSender, FakeWebhookSender>();
+        services.AddScoped<WebhookDispatcher>();
 
         return services;
     }

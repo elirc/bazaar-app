@@ -14,6 +14,8 @@ export default function AdminLayout() {
           <NavLink to="/admin/reviews">Reviews</NavLink>
           <NavLink to="/admin/returns">Returns</NavLink>
           <NavLink to="/admin/gift-cards">Gift cards</NavLink>
+          <NavLink to="/admin/reports">Reports</NavLink>
+          <NavLink to="/admin/webhooks">Webhooks</NavLink>
           <NavLink to="/">← Back to store</NavLink>
         </nav>
       </aside>

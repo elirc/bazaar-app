@@ -2,8 +2,10 @@ using Bazaar.Api.Contracts;
 using Bazaar.Api.Validation;
 using Bazaar.Domain;
 using Bazaar.Domain.Orders;
+using Bazaar.Domain.Webhooks;
 using Bazaar.Infrastructure.Fulfillment;
 using Bazaar.Infrastructure.Persistence;
+using Bazaar.Infrastructure.Webhooks;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bazaar.Api.Endpoints;
@@ -27,7 +29,8 @@ public static class AdminOrderEndpoints
         db.Shipments.AsNoTracking().Include(s => s.Lines).Where(s => s.OrderId == orderId).ToListAsync(ct);
 
     private static async Task<IResult> CreateShipment(
-        BazaarDbContext db, FulfillmentService fulfillment, Guid id, CreateShipmentRequest request, CancellationToken ct)
+        BazaarDbContext db, FulfillmentService fulfillment, WebhookDispatcher webhooks,
+        Guid id, CreateShipmentRequest request, CancellationToken ct)
     {
         if (!RequestValidation.TryValidate(request, out var errors))
             return Results.ValidationProblem(errors);
@@ -46,8 +49,12 @@ public static class AdminOrderEndpoints
                 _ => Results.Problem(outcome.Detail, statusCode: StatusCodes.Status400BadRequest, title: "Invalid shipment"),
             };
 
+        // Fire order.fulfilled only when this shipment completed full coverage.
+        if (outcome.Order!.Status == OrderStatus.Fulfilled)
+            await webhooks.DispatchAsync(WebhookEvents.OrderFulfilled, WebhookPayloads.ForOrder(outcome.Order), ct);
+
         var shipments = await LoadShipments(db, id, ct);
-        return Results.Created($"/api/admin/orders/{id}", outcome.Order!.ToDto(shipments));
+        return Results.Created($"/api/admin/orders/{id}", outcome.Order.ToDto(shipments));
     }
 
     private static async Task<IResult> ListOrders(
@@ -90,7 +97,7 @@ public static class AdminOrderEndpoints
     }
 
     private static async Task<IResult> TransitionOrder(
-        BazaarDbContext db, Guid id, TransitionOrderRequest request, CancellationToken ct)
+        BazaarDbContext db, WebhookDispatcher webhooks, Guid id, TransitionOrderRequest request, CancellationToken ct)
     {
         if (!RequestValidation.TryValidate(request, out var errors))
             return Results.ValidationProblem(errors);
@@ -121,6 +128,10 @@ public static class AdminOrderEndpoints
         }
 
         await db.SaveChangesAsync(ct);
+
+        if (target == OrderStatus.Refunded)
+            await webhooks.DispatchAsync(WebhookEvents.OrderRefunded, WebhookPayloads.ForOrder(order), ct);
+
         return Results.Ok(order.ToDto());
     }
 }
