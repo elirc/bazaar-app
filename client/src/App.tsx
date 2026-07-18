@@ -16,6 +16,7 @@ import AdminCollectionsPage from './routes/admin/AdminCollectionsPage'
 import AdminOrdersPage from './routes/admin/AdminOrdersPage'
 import AdminOrderDetailPage from './routes/admin/AdminOrderDetailPage'
 import AdminDiscountsPage from './routes/admin/AdminDiscountsPage'
+import AdminReviewsPage from './routes/admin/AdminReviewsPage'
 
 export default function App() {
   return (
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="orders" element={<AdminOrdersPage />} />
         <Route path="orders/:id" element={<AdminOrderDetailPage />} />
         <Route path="discounts" element={<AdminDiscountsPage />} />
+        <Route path="reviews" element={<AdminReviewsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

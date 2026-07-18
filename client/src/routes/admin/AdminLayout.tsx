@@ -11,6 +11,7 @@ export default function AdminLayout() {
           <NavLink to="/admin/collections">Collections</NavLink>
           <NavLink to="/admin/orders">Orders</NavLink>
           <NavLink to="/admin/discounts">Discounts</NavLink>
+          <NavLink to="/admin/reviews">Reviews</NavLink>
           <NavLink to="/">← Back to store</NavLink>
         </nav>
       </aside>

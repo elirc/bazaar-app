@@ -637,3 +637,52 @@ textarea {
   align-items: center;
   gap: 8px;
 }
+
+/* Stars + reviews */
+.stars {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 14px;
+}
+.stars__glyphs {
+  color: #f59e0b;
+  letter-spacing: 1px;
+}
+.stars__value {
+  font-weight: 600;
+  color: var(--text-h);
+}
+.reviews {
+  margin-top: 40px;
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+}
+.review-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.review {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.review__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.review__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  font-size: 13px;
+}
+.review-form {
+  margin-top: 24px;
+}

@@ -17,7 +17,11 @@ public static class CatalogMappings
         available,
         variant.WeightGrams);
 
-    public static ProductDetailDto ToDetailDto(this Product product, IReadOnlyDictionary<Guid, int> stockByVariant) => new(
+    public static ProductDetailDto ToDetailDto(
+        this Product product,
+        IReadOnlyDictionary<Guid, int> stockByVariant,
+        double? averageRating = null,
+        int reviewCount = 0) => new(
         product.Id,
         product.Slug,
         product.Title,
@@ -32,7 +36,9 @@ public static class CatalogMappings
             .OrderBy(v => v.Position)
             .Select(v => v.ToDto(stockByVariant.TryGetValue(v.Id, out var qty) ? qty : 0))
             .ToList(),
-        product.Collections.Select(c => c.Slug).OrderBy(s => s).ToList());
+        product.Collections.Select(c => c.Slug).OrderBy(s => s).ToList(),
+        averageRating,
+        reviewCount);
 
     public static CollectionDto ToDto(this Collection collection, int productCount) =>
         new(collection.Id, collection.Slug, collection.Title, collection.Description, productCount);

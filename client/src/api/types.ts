@@ -42,6 +42,8 @@ export interface ProductSummary {
   imageUrl: string | null
   priceFrom: Money | null
   collections: string[]
+  averageRating: number | null
+  reviewCount: number
 }
 
 export interface ProductDetail {
@@ -54,6 +56,34 @@ export interface ProductDetail {
   images: ProductImage[]
   variants: Variant[]
   collections: string[]
+  averageRating: number | null
+  reviewCount: number
+}
+
+export interface Review {
+  id: string
+  authorName: string
+  rating: number
+  title: string | null
+  body: string
+  isVerifiedPurchase: boolean
+  helpfulCount: number
+  createdAt: string
+}
+
+export interface AdminReview {
+  id: string
+  productId: string
+  productTitle: string
+  productSlug: string
+  authorName: string
+  rating: number
+  title: string | null
+  body: string
+  status: string
+  isVerifiedPurchase: boolean
+  helpfulCount: number
+  createdAt: string
 }
 
 export interface Collection {

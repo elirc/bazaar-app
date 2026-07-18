@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import { getStorefrontProduct } from '../../api/catalog'
 import { formatMoney } from '../../lib/format'
 import { useCart } from '../../cart/CartContext'
+import Stars from '../../components/Stars'
+import ProductReviews from '../../components/ProductReviews'
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -57,6 +59,9 @@ export default function ProductDetailPage() {
         <div className="product-detail__info">
           <h1>{product.title}</h1>
           {product.vendor && <p className="product-detail__vendor">{product.vendor}</p>}
+          <p className="product-detail__rating">
+            <Stars rating={product.averageRating} count={product.reviewCount} />
+          </p>
           <p className="product-detail__price">{formatMoney(selectedVariant?.price)}</p>
           <p className="product-detail__description">{product.description}</p>
 
@@ -102,6 +107,8 @@ export default function ProductDetailPage() {
           )}
         </div>
       </div>
+
+      <ProductReviews slug={product.slug} />
     </article>
   )
 }

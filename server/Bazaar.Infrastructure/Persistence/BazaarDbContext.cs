@@ -6,6 +6,7 @@ using Bazaar.Domain.Customers;
 using Bazaar.Domain.Discounts;
 using Bazaar.Domain.Inventory;
 using Bazaar.Domain.Orders;
+using Bazaar.Domain.Reviews;
 using Bazaar.Domain.Shipping;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -29,6 +30,8 @@ public class BazaarDbContext : DbContext
     public DbSet<CustomerAddress> CustomerAddresses => Set<CustomerAddress>();
     public DbSet<DiscountCode> DiscountCodes => Set<DiscountCode>();
     public DbSet<ShippingMethod> ShippingMethods => Set<ShippingMethod>();
+    public DbSet<ProductReview> ProductReviews => Set<ProductReview>();
+    public DbSet<ReviewVote> ReviewVotes => Set<ReviewVote>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -43,6 +46,7 @@ public class BazaarDbContext : DbContext
         configurationBuilder.Properties<DiscountType>().HaveConversion<string>().HaveMaxLength(20);
         configurationBuilder.Properties<CustomerRole>().HaveConversion<string>().HaveMaxLength(20);
         configurationBuilder.Properties<ShippingRateType>().HaveConversion<string>().HaveMaxLength(20);
+        configurationBuilder.Properties<ReviewStatus>().HaveConversion<string>().HaveMaxLength(20);
     }
 
     protected override void OnModelCreating(ModelBuilder b)
@@ -186,6 +190,23 @@ public class BazaarDbContext : DbContext
             e.OwnsOne(s => s.BaseRate, mb => MapMoney(mb, "BaseRate"));
             e.Navigation(s => s.BaseRate).IsRequired();
             e.Ignore(s => s.DeliveryEstimate);
+        });
+
+        b.Entity<ProductReview>(e =>
+        {
+            e.HasKey(r => r.Id);
+            // One review per customer per product.
+            e.HasIndex(r => new { r.ProductId, r.CustomerId }).IsUnique();
+            e.HasIndex(r => r.Status);
+            e.Property(r => r.AuthorName).IsRequired().HasMaxLength(200);
+            e.Property(r => r.Title).HasMaxLength(160);
+            e.Property(r => r.Body).IsRequired().HasMaxLength(4000);
+        });
+
+        b.Entity<ReviewVote>(e =>
+        {
+            e.HasKey(v => v.Id);
+            e.HasIndex(v => new { v.ReviewId, v.CustomerId }).IsUnique();
         });
 
         b.Entity<DiscountCode>(e =>

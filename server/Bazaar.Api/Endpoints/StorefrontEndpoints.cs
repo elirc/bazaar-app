@@ -95,7 +95,14 @@ public static class StorefrontEndpoints
                 p.Collections.Select(c => c.Slug).ToList()))
             .ToListAsync(ct);
 
-        return Results.Ok(new PagedResult<ProductSummaryDto>(items, pageNumber, size, total));
+        var ratings = await RatingsFor(db, items.Select(i => i.Id).ToList(), ct);
+        var withRatings = items
+            .Select(i => ratings.TryGetValue(i.Id, out var r)
+                ? i with { AverageRating = r.Average, ReviewCount = r.Count }
+                : i)
+            .ToList();
+
+        return Results.Ok(new PagedResult<ProductSummaryDto>(withRatings, pageNumber, size, total));
     }
 
     private static async Task<IResult> GetProductBySlug(BazaarDbContext db, string slug, CancellationToken ct)
@@ -117,7 +124,28 @@ public static class StorefrontEndpoints
             .ToListAsync(ct);
         var stockMap = stock.ToDictionary(s => s.VariantId, s => Math.Max(0, s.Available));
 
-        return Results.Ok(product.ToDetailDto(stockMap));
+        var ratings = await RatingsFor(db, new List<Guid> { product.Id }, ct);
+        ratings.TryGetValue(product.Id, out var rating);
+
+        return Results.Ok(product.ToDetailDto(stockMap, rating.Average, rating.Count));
+    }
+
+    /// <summary>Aggregate (average, count) of Approved reviews per product id.</summary>
+    private static async Task<Dictionary<Guid, (double? Average, int Count)>> RatingsFor(
+        BazaarDbContext db, List<Guid> productIds, CancellationToken ct)
+    {
+        if (productIds.Count == 0)
+            return new Dictionary<Guid, (double?, int)>();
+
+        var rows = await db.ProductReviews.AsNoTracking()
+            .Where(r => productIds.Contains(r.ProductId) && r.Status == ReviewStatus.Approved)
+            .GroupBy(r => r.ProductId)
+            .Select(g => new { ProductId = g.Key, Average = g.Average(x => (double)x.Rating), Count = g.Count() })
+            .ToListAsync(ct);
+
+        return rows.ToDictionary(
+            x => x.ProductId,
+            x => ((double?)Math.Round(x.Average, 2), x.Count));
     }
 
     private static async Task<IResult> GetCollections(BazaarDbContext db, CancellationToken ct)
