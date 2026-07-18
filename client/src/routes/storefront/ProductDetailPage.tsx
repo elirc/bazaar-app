@@ -1,17 +1,24 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { getStorefrontProduct } from '../../api/catalog'
+import { addToDefaultWishlist } from '../../api/wishlist'
 import { formatMoney } from '../../lib/format'
 import { useCart } from '../../cart/CartContext'
+import { useAuth } from '../../auth/AuthContext'
 import Stars from '../../components/Stars'
 import ProductReviews from '../../components/ProductReviews'
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>()
   const { addItem } = useCart()
+  const { isAuthenticated } = useAuth()
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
+
+  const wishlistMutation = useMutation({
+    mutationFn: (variantId: string) => addToDefaultWishlist(variantId),
+  })
 
   const { data: product, isLoading, isError, error } = useQuery({
     queryKey: ['storefront-product', slug],
@@ -87,14 +94,25 @@ export default function ProductDetailPage() {
               : 'Out of stock'}
           </p>
 
-          <button
-            type="button"
-            className="primary product-detail__add"
-            onClick={handleAddToCart}
-            disabled={adding || !selectedVariant || selectedVariant.available <= 0}
-          >
-            {adding ? 'Adding…' : 'Add to cart'}
-          </button>
+          <div className="product-detail__actions">
+            <button
+              type="button"
+              className="primary product-detail__add"
+              onClick={handleAddToCart}
+              disabled={adding || !selectedVariant || selectedVariant.available <= 0}
+            >
+              {adding ? 'Adding…' : 'Add to cart'}
+            </button>
+            {isAuthenticated && selectedVariant && (
+              <button
+                type="button"
+                onClick={() => wishlistMutation.mutate(selectedVariant.id)}
+                disabled={wishlistMutation.isPending}
+              >
+                {wishlistMutation.isSuccess ? 'Added to wishlist ✓' : 'Add to wishlist'}
+              </button>
+            )}
+          </div>
 
           {selectedVariant && selectedVariant.options.length > 0 && (
             <ul className="product-detail__options">

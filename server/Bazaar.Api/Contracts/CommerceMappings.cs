@@ -55,15 +55,24 @@ public static class CommerceMappings
                     variant.Price.ToDto(),
                     i.Quantity,
                     lineTotal.ToDto(),
-                    availability.TryGetValue(variant.Id, out var qty) ? qty : 0);
+                    availability.TryGetValue(variant.Id, out var qty) ? qty : 0,
+                    i.SavedForLater);
             })
             .ToList();
 
-        var subtotal = cart.Items.Aggregate(
+        // Saved-for-later lines are excluded from the subtotal and the active item count.
+        var active = cart.Items.Where(i => !i.SavedForLater).ToList();
+        var subtotal = active.Aggregate(
             Money.Zero(currency),
             (acc, i) => acc.Add(i.Variant!.Price.MultiplyBy(i.Quantity)));
 
-        return new CartDto(cart.Id, cart.Token, lines, subtotal.ToDto(), cart.Items.Sum(i => i.Quantity));
+        return new CartDto(
+            cart.Id,
+            cart.Token,
+            lines,
+            subtotal.ToDto(),
+            active.Sum(i => i.Quantity),
+            cart.Items.Count(i => i.SavedForLater));
     }
 
     public static AddressDto ToDto(this Address address) =>

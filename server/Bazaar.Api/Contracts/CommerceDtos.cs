@@ -13,14 +13,16 @@ public sealed record CartLineDto(
     MoneyDto UnitPrice,
     int Quantity,
     MoneyDto LineTotal,
-    int Available);
+    int Available,
+    bool SavedForLater);
 
 public sealed record CartDto(
     Guid Id,
     string Token,
     IReadOnlyList<CartLineDto> Items,
     MoneyDto Subtotal,
-    int ItemCount);
+    int ItemCount,
+    int SavedCount);
 
 public sealed record AddCartItemRequest
 {
@@ -36,6 +38,11 @@ public sealed record UpdateCartItemRequest
 {
     [Range(0, 99)]
     public int Quantity { get; init; }
+}
+
+public sealed record SaveForLaterRequest
+{
+    public bool Saved { get; init; }
 }
 
 // ---- Orders / checkout ----

@@ -686,3 +686,46 @@ textarea {
 .review-form {
   margin-top: 24px;
 }
+
+/* Wishlist + saved for later */
+.product-detail__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.drawer__saved {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.drawer__saved h3 {
+  font-size: 15px;
+  margin: 0 0 8px;
+}
+.wishlist {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 16px;
+}
+.wishlist__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.wishlist__items {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.wishlist__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+  flex-wrap: wrap;
+}

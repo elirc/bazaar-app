@@ -23,6 +23,7 @@ export default function StorefrontLayout() {
           {isAdmin && <Link to="/admin">Admin</Link>}
           {isAuthenticated ? (
             <>
+              <Link to="/wishlist">Wishlist</Link>
               <Link to="/account">Account</Link>
               <button type="button" className="link" onClick={signOut}>Sign out</button>
             </>

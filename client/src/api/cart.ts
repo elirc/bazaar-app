@@ -41,6 +41,13 @@ export function removeCartItem(token: string, variantId: string) {
   return apiRequest<Cart>(`/api/cart/${token}/items/${variantId}`, { method: 'DELETE' })
 }
 
+export function setCartItemSaved(token: string, variantId: string, saved: boolean) {
+  return apiRequest<Cart>(`/api/cart/${token}/items/${variantId}/saved`, {
+    method: 'POST',
+    body: { saved },
+  })
+}
+
 export interface AddressInput {
   name: string
   line1: string
