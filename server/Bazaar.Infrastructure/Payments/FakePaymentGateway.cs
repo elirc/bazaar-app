@@ -19,4 +19,15 @@ public sealed class FakePaymentGateway : IPaymentGateway
 
         return Task.FromResult(PaymentResult.Success($"txn_{Guid.NewGuid():N}"));
     }
+
+    public Task<RefundResult> RefundAsync(RefundRequest request, CancellationToken ct = default)
+    {
+        if (request.Amount.Amount <= 0m)
+            return Task.FromResult(RefundResult.Failed("Refund amount must be positive."));
+
+        if (request.Email.Contains("refund-fail", StringComparison.OrdinalIgnoreCase))
+            return Task.FromResult(RefundResult.Failed("The refund could not be processed."));
+
+        return Task.FromResult(RefundResult.Success($"rfnd_{Guid.NewGuid():N}"));
+    }
 }

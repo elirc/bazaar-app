@@ -6,6 +6,7 @@ using Bazaar.Domain.Customers;
 using Bazaar.Domain.Discounts;
 using Bazaar.Domain.Inventory;
 using Bazaar.Domain.Orders;
+using Bazaar.Domain.Returns;
 using Bazaar.Domain.Reviews;
 using Bazaar.Domain.Shipping;
 using Bazaar.Domain.Wishlists;
@@ -35,6 +36,8 @@ public class BazaarDbContext : DbContext
     public DbSet<ReviewVote> ReviewVotes => Set<ReviewVote>();
     public DbSet<Wishlist> Wishlists => Set<Wishlist>();
     public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
+    public DbSet<ReturnRequest> ReturnRequests => Set<ReturnRequest>();
+    public DbSet<ReturnLine> ReturnLines => Set<ReturnLine>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -50,6 +53,7 @@ public class BazaarDbContext : DbContext
         configurationBuilder.Properties<CustomerRole>().HaveConversion<string>().HaveMaxLength(20);
         configurationBuilder.Properties<ShippingRateType>().HaveConversion<string>().HaveMaxLength(20);
         configurationBuilder.Properties<ReviewStatus>().HaveConversion<string>().HaveMaxLength(20);
+        configurationBuilder.Properties<ReturnStatus>().HaveConversion<string>().HaveMaxLength(20);
     }
 
     protected override void OnModelCreating(ModelBuilder b)
@@ -232,6 +236,32 @@ public class BazaarDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(i => i.VariantId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        b.Entity<ReturnRequest>(e =>
+        {
+            e.HasKey(r => r.Id);
+            e.HasIndex(r => r.OrderId);
+            e.HasIndex(r => r.CustomerId);
+            e.HasIndex(r => r.Status);
+            e.Property(r => r.Reason).HasMaxLength(1000);
+            e.Property(r => r.RefundReference).HasMaxLength(80);
+
+            e.OwnsOne(r => r.RefundAmount, mb => MapMoney(mb, "Refund"));
+            e.Navigation(r => r.RefundAmount).IsRequired();
+
+            e.HasMany(r => r.Lines)
+                .WithOne()
+                .HasForeignKey(l => l.ReturnRequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.Navigation(r => r.Lines).UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        b.Entity<ReturnLine>(e =>
+        {
+            e.HasKey(l => l.Id);
+            e.Property(l => l.Sku).IsRequired().HasMaxLength(80);
+            e.Property(l => l.Title).IsRequired().HasMaxLength(200);
         });
 
         b.Entity<DiscountCode>(e =>

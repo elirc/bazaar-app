@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
 import { Routes, Route } from 'react-router-dom'
 import { renderWithProviders, jsonResponse } from '../../test/utils'
+import { AuthProvider } from '../../auth/AuthContext'
 import OrderConfirmationPage from './OrderConfirmationPage'
 
 const order = {
@@ -23,9 +24,11 @@ describe('OrderConfirmationPage', () => {
   it('shows the placed order number and total', async () => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(jsonResponse(order))))
     renderWithProviders(
-      <Routes>
-        <Route path="/order/:id" element={<OrderConfirmationPage />} />
-      </Routes>,
+      <AuthProvider>
+        <Routes>
+          <Route path="/order/:id" element={<OrderConfirmationPage />} />
+        </Routes>
+      </AuthProvider>,
       '/order/o1',
     )
 

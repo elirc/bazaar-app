@@ -156,11 +156,35 @@ export interface Address {
 }
 
 export interface OrderLine {
+  id: string
+  variantId: string | null
   sku: string
   title: string
   quantity: number
   unitPrice: Money
   lineTotal: Money
+}
+
+export interface ReturnLine {
+  orderLineItemId: string
+  sku: string
+  title: string
+  quantity: number
+}
+
+export interface ReturnRequest {
+  id: string
+  orderId: string
+  orderNumber: string
+  status: string
+  reason: string | null
+  refundAmount: Money
+  lines: ReturnLine[]
+  createdAt: string
+}
+
+export interface AdminReturn extends ReturnRequest {
+  email: string
 }
 
 export interface Order {

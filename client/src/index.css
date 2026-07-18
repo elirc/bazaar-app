@@ -729,3 +729,17 @@ textarea {
   padding-bottom: 12px;
   flex-wrap: wrap;
 }
+
+/* Returns */
+.returns {
+  margin-top: 32px;
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+}
+.returns__reason {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 420px;
+  margin: 12px 0;
+}

@@ -57,6 +57,8 @@ public sealed record AddressDto(
     string Country);
 
 public sealed record OrderLineDto(
+    Guid Id,
+    Guid? VariantId,
     string Sku,
     string Title,
     int Quantity,
