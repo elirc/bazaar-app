@@ -37,6 +37,14 @@ public enum CustomerRole
     Admin,
 }
 
+/// <summary>Moderation state of a customer product review.</summary>
+public enum ReviewStatus
+{
+    Pending,
+    Approved,
+    Rejected,
+}
+
 /// <summary>How a shipping method prices an order.</summary>
 public enum ShippingRateType
 {

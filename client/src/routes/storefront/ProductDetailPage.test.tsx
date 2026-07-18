@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { CartProvider } from '../../cart/CartContext'
+import { AuthProvider } from '../../auth/AuthContext'
 import ProductDetailPage from './ProductDetailPage'
 import { jsonResponse } from '../../test/utils'
 
@@ -20,11 +21,13 @@ function renderDetail() {
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={['/products/ceramic-mug']}>
-        <CartProvider>
-          <Routes>
-            <Route path="/products/:slug" element={<ProductDetailPage />} />
-          </Routes>
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <Routes>
+              <Route path="/products/:slug" element={<ProductDetailPage />} />
+            </Routes>
+          </CartProvider>
+        </AuthProvider>
       </MemoryRouter>
     </QueryClientProvider>,
   )
@@ -47,6 +50,7 @@ describe('ProductDetailPage', () => {
           posts.push(url)
           return Promise.resolve(jsonResponse({ id: 'c1', token: 'newtok', itemCount: 1, subtotal: { amount: 14, currency: 'USD' }, items: [] }))
         }
+        if (url.includes('/reviews')) return Promise.resolve(jsonResponse([]))
         if (url.includes('/api/storefront/products/')) return Promise.resolve(jsonResponse(product))
         return Promise.resolve(jsonResponse({}, 404))
       }),

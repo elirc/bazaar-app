@@ -12,7 +12,9 @@ public sealed record ProductSummaryDto(
     string Status,
     string? ImageUrl,
     MoneyDto? PriceFrom,
-    IReadOnlyList<string> Collections);
+    IReadOnlyList<string> Collections,
+    double? AverageRating = null,
+    int ReviewCount = 0);
 
 public sealed record VariantDto(
     Guid Id,
@@ -37,7 +39,9 @@ public sealed record ProductDetailDto(
     string Status,
     IReadOnlyList<ProductImageDto> Images,
     IReadOnlyList<VariantDto> Variants,
-    IReadOnlyList<string> Collections);
+    IReadOnlyList<string> Collections,
+    double? AverageRating = null,
+    int ReviewCount = 0);
 
 public sealed record CollectionDto(
     Guid Id,
