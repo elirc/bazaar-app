@@ -1,10 +1,13 @@
+using System.Diagnostics;
 using System.Text;
+using System.Threading.RateLimiting;
 using Bazaar.Api;
 using Bazaar.Api.Endpoints;
 using Bazaar.Infrastructure;
 using Bazaar.Infrastructure.Auth;
 using Bazaar.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -50,10 +53,42 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Admin", policy => policy.RequireAuthenticatedUser().RequireRole("Admin"));
 });
 
+// Rate limiting: cap checkout attempts per fixed window (permit limit is configurable).
+var checkoutPermitLimit = builder.Configuration.GetValue<int?>("RateLimiting:CheckoutPermitLimit") ?? 100;
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("checkout", limiter =>
+    {
+        limiter.PermitLimit = checkoutPermitLimit;
+        limiter.Window = TimeSpan.FromSeconds(10);
+        limiter.QueueLimit = 0;
+    });
+});
+
 var app = builder.Build();
 
 app.UseExceptionHandler();
+
+// Lightweight request logging: method, path, status, and elapsed time.
+app.Use(async (context, next) =>
+{
+    var stopwatch = Stopwatch.StartNew();
+    try
+    {
+        await next();
+    }
+    finally
+    {
+        stopwatch.Stop();
+        app.Logger.LogInformation(
+            "HTTP {Method} {Path} responded {StatusCode} in {ElapsedMs}ms",
+            context.Request.Method, context.Request.Path, context.Response.StatusCode, stopwatch.ElapsedMilliseconds);
+    }
+});
+
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -69,7 +104,32 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.MapGet("/", () => "Bazaar API");
-app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "bazaar-api" }));
+
+// Health with a database probe and a structured body.
+app.MapGet("/health", async (BazaarDbContext db, CancellationToken ct) =>
+{
+    bool databaseOk;
+    try
+    {
+        databaseOk = await db.Database.CanConnectAsync(ct);
+    }
+    catch
+    {
+        databaseOk = false;
+    }
+
+    var body = new
+    {
+        status = databaseOk ? "ok" : "degraded",
+        service = "bazaar-api",
+        checks = new { database = databaseOk ? "ok" : "unavailable" },
+        timestamp = DateTimeOffset.UtcNow,
+    };
+
+    return databaseOk
+        ? Results.Ok(body)
+        : Results.Json(body, statusCode: StatusCodes.Status503ServiceUnavailable);
+});
 
 app.MapAuthEndpoints();
 app.MapAccountEndpoints();

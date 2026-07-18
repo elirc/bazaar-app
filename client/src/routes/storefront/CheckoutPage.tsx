@@ -89,7 +89,12 @@ export default function CheckoutPage() {
     mutation.mutate()
   }
 
-  const errorMessage = mutation.error instanceof ApiError ? mutation.error.message : null
+  const errorMessage =
+    mutation.error instanceof ApiError
+      ? mutation.error.status === 429
+        ? 'Too many checkout attempts. Please wait a moment and try again.'
+        : mutation.error.message
+      : null
 
   return (
     <section className="checkout">

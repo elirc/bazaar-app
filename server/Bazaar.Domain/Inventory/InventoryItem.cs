@@ -1,4 +1,5 @@
 using Bazaar.Domain.Catalog;
+using Bazaar.Domain.Common;
 
 namespace Bazaar.Domain.Inventory;
 
@@ -6,12 +7,15 @@ namespace Bazaar.Domain.Inventory;
 /// Stock record for a single variant. <see cref="Available"/> is what a shopper can buy:
 /// on-hand minus the quantity currently reserved by in-flight checkouts.
 /// </summary>
-public class InventoryItem
+public class InventoryItem : IConcurrencyStamped
 {
     public Guid Id { get; private set; } = Guid.NewGuid();
     public Guid VariantId { get; set; }
     public int OnHand { get; set; }
     public int Reserved { get; set; }
+
+    /// <summary>Optimistic-concurrency token, refreshed on every stock update.</summary>
+    public Guid ConcurrencyStamp { get; set; } = Guid.NewGuid();
 
     public ProductVariant? Variant { get; set; }
 

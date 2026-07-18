@@ -1,8 +1,9 @@
 # Bazaar
 
 A Shopify-Lite e-commerce application: a customer **storefront** (browse, search, cart,
-checkout) and an **admin** back office (product, collection, order & discount management),
-built as a monorepo with a .NET 10 API and a React + TypeScript client.
+checkout, accounts, reviews, wishlists, returns, tracking) and an **admin** back office
+(catalog, orders & fulfilment, discounts, reviews, returns, gift cards, tax, reports &
+webhooks), built as a monorepo with a .NET 10 API and a React + TypeScript client.
 
 - **`/server`** — ASP.NET Core Web API on .NET 10, EF Core + SQLite, layered as
   `Bazaar.Api` / `Bazaar.Domain` / `Bazaar.Infrastructure` / `Bazaar.Tests`.
@@ -13,20 +14,27 @@ built as a monorepo with a .NET 10 API and a React + TypeScript client.
 ## Features
 
 **Storefront**
-- Product grid with URL-driven search, collection filter, sort (newest / price / name)
-  and pagination.
-- Product detail with variant selection, live availability, and add-to-cart.
-- Slide-out cart drawer (quantity steppers, remove, live subtotal).
-- Checkout with contact + shipping address, discount-code entry, tax & shipping, and an
-  order confirmation page.
+- Product grid with URL-driven search, collection filter, sort, pagination, and aggregate
+  star ratings.
+- Product detail with variant selection, live availability, add-to-cart, add-to-wishlist,
+  a verified-purchase review section (with helpful votes), and shipment tracking on orders.
+- Slide-out cart drawer with quantity steppers, remove, **save-for-later** (excluded from
+  totals), and a live subtotal.
+- Checkout with contact + shipping address, **shipping-method selection** (with delivery
+  estimates), discount-code entry, **gift-card** entry, tax, and an order confirmation with
+  tracking and (for fulfilled orders) a **return request** flow.
+- **Accounts**: register / sign in (JWT), order history, an **address book**, **wishlists**
+  (default + named, move-to-cart, back-in-stock flags), and returns history.
 
 **Admin (`/admin`)**
-- Product management: list (search / status filter / paging), create & edit (fields,
-  status, collection membership, variants with inline price & stock editing), delete.
-- Collection management (create / list / delete).
-- Order management: list (search / status / paging), detail, and lifecycle transitions
-  (Paid → Fulfilled / Refunded / Cancelled) with automatic restock on cancel/refund.
-- Discount management (create / list / delete).
+- Product management (search / status filter / paging, create & edit incl. variants, stock,
+  weight, tax category, collection membership), collection management.
+- Order management: list, detail, lifecycle transitions, and **fulfilment** — partial
+  shipments with carrier/tracking; order status is derived from shipment coverage
+  (`PartiallyFulfilled` / `Fulfilled`).
+- Discounts, **review moderation**, **returns queue** (approve → gateway refund + restock),
+  **gift-card** issuance, **reports** (sales over time with inline bars, top products, low
+  stock, discount usage), and **webhook** settings (subscriptions + delivery log).
 
 ## Prerequisites
 
@@ -46,10 +54,14 @@ dotnet restore
 dotnet run --project Bazaar.Api        # http://localhost:5180
 ```
 
-On startup the API applies EF Core migrations and seeds a small dev catalog
-(6 products / 12 variants / 3 collections / 2 discount codes).
+On startup the API applies EF Core migrations and seeds a small dev catalog, shipping
+methods, tax zones, a demo gift card, and accounts.
 
-Health check: `GET http://localhost:5180/health` → `{ "status": "ok", "service": "bazaar-api" }`
+Health check (with DB probe): `GET http://localhost:5180/health` →
+`{ "status": "ok", "service": "bazaar-api", "checks": { "database": "ok" }, ... }`
+
+Seeded dev accounts: **admin** `admin@bazaar.test` / `admin-dev-password`, **customer**
+`shopper@bazaar.test` / `shopper-dev-password`.
 
 ```bash
 cd server
@@ -64,9 +76,8 @@ pnpm install
 pnpm dev                                # http://localhost:5173
 ```
 
-The Vite dev server proxies `/api` and `/health` to the API at `http://localhost:5180`
-(override with `VITE_API_PROXY`). To point a production build at a specific API origin, set
-`VITE_API_BASE_URL`.
+The Vite dev server proxies `/api` and `/health` to the API (override with `VITE_API_PROXY`).
+To point a production build at a specific API origin, set `VITE_API_BASE_URL`.
 
 Storefront: <http://localhost:5173/> · Admin: <http://localhost:5173/admin>
 
@@ -82,8 +93,8 @@ pnpm build         # tsc -b && vite build
 bazaar-app/
 ├─ server/                    # .NET 10 solution (Bazaar.slnx)
 │  ├─ Bazaar.Domain/          # entities, value objects, ports (no framework deps)
-│  ├─ Bazaar.Infrastructure/  # EF Core DbContext, converters, migrations, seed, adapters
-│  ├─ Bazaar.Api/             # HTTP endpoints, DTOs, validation, composition root
+│  ├─ Bazaar.Infrastructure/  # EF Core DbContext, converters, migrations, seed, adapters, services
+│  ├─ Bazaar.Api/             # HTTP endpoints, DTOs, validation, auth, composition root
 │  └─ Bazaar.Tests/           # xUnit unit + WebApplicationFactory integration tests
 ├─ client/                    # Vite + React + TS (storefront + /admin)
 └─ tmp/                       # gitignored scratch space
@@ -91,62 +102,93 @@ bazaar-app/
 
 ## Architecture
 
-- **Domain** (`Bazaar.Domain`) is framework-free: aggregates (`Product`, `Cart`, `Order`),
-  value objects (`Money`, `Address`), and **ports** (`IPaymentGateway`, `ITaxCalculator`,
-  `IShippingCalculator`). Business rules — quantity limits, the order lifecycle transition
-  table, inventory reserve/commit, discount computation — live here and are unit-tested in
-  isolation.
+- **Domain** (`Bazaar.Domain`) is framework-free: aggregates (`Product`, `Cart`, `Order`,
+  `Wishlist`, `ReturnRequest`, `Shipment`, `GiftCard`, `TaxZone`, `WebhookSubscription`),
+  value objects (`Money`, `Address`), and **ports** (`IPaymentGateway`). Business rules —
+  quantity limits, the order lifecycle, inventory reserve/commit, discount/shipping/tax and
+  refund computation, shipment coverage — live here and are unit-tested in isolation.
 - **Infrastructure** owns EF Core (the `BazaarDbContext`, value converters, migrations,
-  seeding), the `FakePaymentGateway` adapter, and the `CheckoutService` orchestration.
+  seeding), adapters (`FakePaymentGateway`, `FakeWebhookSender`, JWT/password/tax/webhook
+  services), and orchestration services (`CheckoutService`, `ReturnService`,
+  `FulfillmentService`, `WebhookDispatcher`).
 - **Api** is a thin minimal-API layer: endpoint groups, request/response DTOs, DataAnnotations
-  validation, and RFC 7807 ProblemDetails responses (including a global exception handler).
+  validation, JWT auth + role policies, rate limiting, request logging, and RFC 7807
+  ProblemDetails (including a global exception handler).
 
 ## API surface (selected)
 
-| Area       | Endpoint                                                        |
-| ---------- | --------------------------------------------------------------- |
-| Storefront | `GET /api/storefront/products` (search, collection, sort, page) |
-|            | `GET /api/storefront/products/{slug}`                           |
-|            | `GET /api/storefront/collections`                               |
-|            | `GET /api/storefront/discounts/{code}`                          |
-| Cart       | `POST /api/cart`, `GET /api/cart/{token}`                       |
-|            | `POST|PUT|DELETE /api/cart/{token}/items[/{variantId}]`         |
-| Checkout   | `POST /api/checkout`, `GET /api/orders/{id}`                    |
-| Admin      | `GET|POST|PUT|DELETE /api/admin/products[/{id}]`                |
-|            | `PUT /api/admin/variants/{id}`                                  |
-|            | `GET|POST|PUT|DELETE /api/admin/collections[/{id}]`             |
-|            | `GET /api/admin/orders`, `POST /api/admin/orders/{id}/transition` |
-|            | `GET|POST|DELETE /api/admin/discounts[/{id}]`                   |
+| Area       | Endpoint                                                          |
+| ---------- | ---------------------------------------------------------------- |
+| Auth       | `POST /api/auth/register\|login`, `GET /api/auth/me`             |
+| Account    | `GET /api/account/orders[/{id}]`, `…/addresses`, `…/returns`     |
+|            | `GET\|POST\|DELETE /api/account/wishlists…`, `…/wishlist/items`  |
+|            | `POST /api/account/orders/{id}/returns`                          |
+| Storefront | `GET /api/storefront/products` (search/collection/sort/page)     |
+|            | `GET /api/storefront/products/{slug}[/reviews]`, `…/collections` |
+|            | `GET /api/storefront/discounts/{code}`, `…/gift-cards/{code}`    |
+|            | `POST /api/storefront/products/{slug}/reviews`, `…/reviews/{id}/helpful` |
+| Cart       | `POST /api/cart`, `GET /api/cart/{token}`                        |
+|            | `POST\|PUT\|DELETE /api/cart/{token}/items[/{variantId}[/saved]]` |
+| Checkout   | `POST /api/checkout` (rate-limited), `GET /api/orders/{id}`      |
+|            | `GET /api/checkout/shipping-options`                             |
+| Admin      | `…/products`, `…/variants`, `…/collections`, `…/discounts`       |
+|            | `…/orders[/{id}]`, `…/orders/{id}/transition\|shipments`         |
+|            | `…/reviews[/{id}/moderate]`, `…/returns[/{id}/approve\|reject]`  |
+|            | `…/gift-cards`, `…/reports/{sales\|top-products\|low-stock\|discounts}` |
+|            | `…/webhooks[/deliveries]`                                        |
+| Ops        | `GET /health` (DB probe, structured body)                        |
 
 ## Development notes & gotchas
 
-- **SQLite + `DateTimeOffset`:** SQLite cannot order/compare `DateTimeOffset`, so every such
-  column is persisted as UTC ticks (`long`) via a global value converter.
+- **SQLite + `DateTimeOffset`:** persisted as UTC ticks (`long`) via a global value converter
+  (SQLite cannot order/compare `DateTimeOffset`).
 - **Money:** stored as integer minor units (cents, a `long`) plus a 3-letter currency code;
-  arithmetic uses banker's rounding, covered by tests.
-- **Guid keys:** primary keys are assigned in the domain, so EF is configured
-  `ValueGeneratedNever` — otherwise a new line added to an already-tracked cart would be
-  mistaken for an existing row and `UPDATE`d instead of `INSERT`ed.
-- **Validation:** request DTOs make "required" fields nullable so a missing value yields a
-  `400` (a non-nullable `Guid`/`DateTimeOffset` with `[Required]` is a no-op); `Include`
-  runs before `Skip`/`Take`.
-- **Security audit:** `GHSA-2m69-gcr7-jv3q` (the SQLite native library bundled transitively
-  by EF Core) is resolved by pinning `SQLitePCLRaw.bundle_e_sqlite3` to `3.0.3` in
-  `Bazaar.Infrastructure`; the NuGet audit is clean with no suppression.
+  arithmetic uses banker's rounding. **Never share one `Money` instance across two owned
+  navigations** (e.g. a gift card's initial/balance, or an order's grand-total/gift-card-total)
+  — EF owned-type tracking keys on the instance and will throw; construct distinct instances.
+- **Guid keys:** assigned in the domain, so EF is configured `ValueGeneratedNever`.
+- **Optimistic concurrency:** `InventoryItem` and `Cart` carry a `ConcurrencyStamp` refreshed on
+  every update; a stale write raises `DbUpdateConcurrencyException`, mapped to a **409**.
+- **Fulfillment:** order status is derived from shipment coverage (not a manual transition);
+  cancellation is blocked once anything ships.
+- **Tax:** matched by zone (country/region + per-category rate); region-less addresses fall back
+  to the flat rate so earlier totals are preserved.
+- **Webhooks:** HMAC-SHA256 signed, delivered best-effort with capped retries; the default sender
+  is a deterministic fake (URLs containing "fail" error) — swap in an HTTP adapter for production.
+- **Validation:** request DTOs make "required" fields nullable so a missing value yields a `400`;
+  `Include` runs before `Skip`/`Take`.
+- **Security audit:** `GHSA-2m69-gcr7-jv3q` is resolved by pinning `SQLitePCLRaw.bundle_e_sqlite3`
+  to `3.0.3` in `Bazaar.Infrastructure`; the NuGet audit is clean with no suppression.
 
 ## Tests
 
-- **Server:** 90 tests (xUnit) — Money & domain behaviour, EF persistence round-trips,
-  and WebApplicationFactory integration tests over an in-memory SQLite database.
-- **Client:** 19 tests (Vitest + React Testing Library, fetch-stubbed).
+- **Server:** 180 tests (xUnit) — domain behaviour (Money, lifecycle, shipping/tax/refund/webhook
+  logic), EF persistence round-trips + concurrency, and WebApplicationFactory integration tests
+  over an in-memory SQLite database.
+- **Client:** 33 tests (Vitest + React Testing Library, fetch-stubbed).
 
 ## Sprint history
 
-The build shipped as six merged sprint PRs on `main`:
+Shipped as merged sprint PRs on `main`.
+
+**Phase 1 (v1.0.0):**
 
 1. Scaffold — monorepo, `/health`, client shell, both test harnesses.
 2. Domain + persistence — catalog/inventory/carts/orders entities, Money, EF migration + seed.
 3. Catalog — admin product/collection CRUD + storefront browse/search/filter/pagination.
 4. Cart & checkout — guest cart, checkout with tax/shipping, fake payment gateway.
 5. Orders, admin & discounts — order lifecycle + admin screens, discount codes at checkout.
-6. Hardening — ProblemDetails, stock/pagination/validation edge cases, tests, this README.
+6. Hardening — ProblemDetails, stock/pagination/validation edge cases.
+
+**Phase 2 (v2.0.0):**
+
+7. Accounts & auth — customer registration/login (JWT), admin role, order history.
+8. Addresses & shipping — address book, shipping methods (flat/weight/threshold), estimates.
+9. Reviews & ratings — verified-purchase reviews, moderation, aggregate ratings, helpful votes.
+10. Wishlists & saved-for-later — default + named lists, move-to-cart, back-in-stock flags.
+11. Returns & refunds — per-line RMAs, approval flow, discount/tax-adjusted refunds, restock.
+12. Tax zones & gift cards — zone/category tax rates, gift-card issue/redeem/partial tender.
+13. Fulfillment — partial shipments, coverage-derived status, cancellation guards, tracking.
+14. Reporting & webhooks — admin reports, HMAC-signed webhooks with delivery log + retries.
+15. Production readiness — request logging, DB-probe health, optimistic concurrency, checkout
+    rate limiting, pagination audit, this README.

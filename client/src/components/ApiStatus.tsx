@@ -8,7 +8,12 @@ export default function ApiStatus() {
     staleTime: 60_000,
   })
 
-  const label = isError ? 'API offline' : data ? `API ${data.status}` : 'API…'
+  const db = data?.checks?.database
+  const label = isError
+    ? 'API offline'
+    : data
+      ? `API ${data.status}${db ? ` · DB ${db}` : ''}`
+      : 'API…'
   return (
     <span className="api-status" data-testid="api-status">
       {label}

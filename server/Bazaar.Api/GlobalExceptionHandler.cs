@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Bazaar.Api;
 
@@ -26,6 +27,23 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
+        // Optimistic-concurrency conflicts (stock / carts) are an expected 409, not a server error.
+        if (exception is DbUpdateConcurrencyException)
+        {
+            var conflict = new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Conflict",
+                Detail = "The resource was modified by another request. Please retry.",
+            };
+            httpContext.Response.StatusCode = conflict.Status.Value;
+            return await _problemDetails.TryWriteAsync(new ProblemDetailsContext
+            {
+                HttpContext = httpContext,
+                ProblemDetails = conflict,
+            });
+        }
+
         _logger.LogError(exception, "Unhandled exception processing {Path}", httpContext.Request.Path);
 
         var problem = new ProblemDetails
