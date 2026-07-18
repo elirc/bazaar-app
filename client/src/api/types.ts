@@ -287,6 +287,59 @@ export interface AuthResponse {
   customer: CurrentUser
 }
 
+export interface SalesBucket {
+  date: string
+  orderCount: number
+  revenue: Money
+}
+
+export interface SalesReport {
+  buckets: SalesBucket[]
+  totalOrders: number
+  totalRevenue: Money
+}
+
+export interface TopProduct {
+  sku: string
+  title: string
+  quantitySold: number
+  revenue: Money
+}
+
+export interface LowStockItem {
+  variantId: string
+  sku: string
+  productTitle: string
+  available: number
+}
+
+export interface DiscountUsage {
+  code: string
+  type: string
+  timesUsed: number
+  usageLimit: number | null
+}
+
+export interface WebhookSubscription {
+  id: string
+  url: string
+  events: string[]
+  secret: string
+  isActive: boolean
+  createdAt: string
+}
+
+export interface WebhookDelivery {
+  id: string
+  subscriptionId: string
+  event: string
+  url: string
+  success: boolean
+  responseStatus: number | null
+  attemptCount: number
+  createdAt: string
+}
+
 export interface Discount {
   id: string
   code: string

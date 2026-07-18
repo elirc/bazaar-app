@@ -11,6 +11,7 @@ using Bazaar.Domain.Returns;
 using Bazaar.Domain.Reviews;
 using Bazaar.Domain.Shipping;
 using Bazaar.Domain.Tax;
+using Bazaar.Domain.Webhooks;
 using Bazaar.Domain.Wishlists;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -44,6 +45,8 @@ public class BazaarDbContext : DbContext
     public DbSet<GiftCard> GiftCards => Set<GiftCard>();
     public DbSet<Shipment> Shipments => Set<Shipment>();
     public DbSet<ShipmentLine> ShipmentLines => Set<ShipmentLine>();
+    public DbSet<WebhookSubscription> WebhookSubscriptions => Set<WebhookSubscription>();
+    public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -385,6 +388,25 @@ public class BazaarDbContext : DbContext
             e.HasKey(l => l.Id);
             e.Property(l => l.Sku).IsRequired().HasMaxLength(80);
             e.Property(l => l.Title).IsRequired().HasMaxLength(200);
+        });
+
+        b.Entity<WebhookSubscription>(e =>
+        {
+            e.HasKey(w => w.Id);
+            e.Property(w => w.Url).IsRequired().HasMaxLength(1000);
+            e.Property(w => w.Secret).IsRequired().HasMaxLength(200);
+            e.Property(w => w.Events).IsRequired().HasMaxLength(400);
+            e.Ignore(w => w.EventList);
+        });
+
+        b.Entity<WebhookDelivery>(e =>
+        {
+            e.HasKey(d => d.Id);
+            e.HasIndex(d => d.SubscriptionId);
+            e.Property(d => d.Event).IsRequired().HasMaxLength(60);
+            e.Property(d => d.Url).IsRequired().HasMaxLength(1000);
+            e.Property(d => d.Payload).IsRequired().HasMaxLength(8000);
+            e.Property(d => d.Signature).IsRequired().HasMaxLength(128);
         });
 
         // Guid primary keys are assigned by the domain (in entity initializers), not by the store.

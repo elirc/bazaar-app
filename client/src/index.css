@@ -766,3 +766,28 @@ textarea {
 .tracking {
   margin-top: 24px;
 }
+
+/* Reports */
+.report-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  margin-top: 20px;
+}
+.report-card h2 {
+  margin-top: 0;
+}
+.report-bar-cell {
+  width: 40%;
+}
+.report-bar {
+  display: inline-block;
+  height: 12px;
+  min-width: 2px;
+  background: var(--accent);
+  border-radius: 6px;
+}
+.webhooks-page code {
+  font-family: var(--mono);
+  font-size: 12px;
+}

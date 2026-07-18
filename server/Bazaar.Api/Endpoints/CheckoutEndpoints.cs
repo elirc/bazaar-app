@@ -2,8 +2,10 @@ using System.Security.Claims;
 using Bazaar.Api.Auth;
 using Bazaar.Api.Contracts;
 using Bazaar.Api.Validation;
+using Bazaar.Domain.Webhooks;
 using Bazaar.Infrastructure.Checkout;
 using Bazaar.Infrastructure.Persistence;
+using Bazaar.Infrastructure.Webhooks;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bazaar.Api.Endpoints;
@@ -18,7 +20,7 @@ public static class CheckoutEndpoints
     }
 
     private static async Task<IResult> Checkout(
-        CheckoutService checkout, ClaimsPrincipal principal, CheckoutRequest request, CancellationToken ct)
+        CheckoutService checkout, WebhookDispatcher webhooks, ClaimsPrincipal principal, CheckoutRequest request, CancellationToken ct)
     {
         var children = request.ShippingAddress is null
             ? Enumerable.Empty<(string, object)>()
@@ -31,6 +33,15 @@ public static class CheckoutEndpoints
             request.CartToken!, request.Email!, request.ShippingAddress!.ToAddress(),
             request.DiscountCode, principal.GetCustomerId(), request.ShippingMethodCode, request.GiftCardCode);
         var outcome = await checkout.CheckoutAsync(command, ct);
+
+        if (outcome.Status == CheckoutStatus.Ok)
+        {
+            var placed = outcome.Order!;
+            // Checkout both creates and pays the order — fire both events from the real lifecycle.
+            await webhooks.DispatchAsync(WebhookEvents.OrderCreated, WebhookPayloads.ForOrder(placed), ct);
+            await webhooks.DispatchAsync(WebhookEvents.OrderPaid, WebhookPayloads.ForOrder(placed), ct);
+            return Results.Created($"/api/orders/{placed.Id}", placed.ToDto());
+        }
 
         return outcome.Status switch
         {

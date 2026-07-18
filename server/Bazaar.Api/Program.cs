@@ -81,6 +81,8 @@ app.MapAdminOrderEndpoints();
 app.MapAdminDiscountEndpoints();
 app.MapAdminReviewEndpoints();
 app.MapAdminReturnEndpoints();
+app.MapAdminReportEndpoints();
+app.MapAdminWebhookEndpoints();
 app.MapCartEndpoints();
 app.MapCheckoutEndpoints();
 app.MapShippingEndpoints();

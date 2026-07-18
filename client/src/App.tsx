@@ -20,6 +20,8 @@ import AdminDiscountsPage from './routes/admin/AdminDiscountsPage'
 import AdminReviewsPage from './routes/admin/AdminReviewsPage'
 import AdminReturnsPage from './routes/admin/AdminReturnsPage'
 import AdminGiftCardsPage from './routes/admin/AdminGiftCardsPage'
+import AdminReportsPage from './routes/admin/AdminReportsPage'
+import AdminWebhooksPage from './routes/admin/AdminWebhooksPage'
 
 export default function App() {
   return (
@@ -53,6 +55,8 @@ export default function App() {
         <Route path="reviews" element={<AdminReviewsPage />} />
         <Route path="returns" element={<AdminReturnsPage />} />
         <Route path="gift-cards" element={<AdminGiftCardsPage />} />
+        <Route path="reports" element={<AdminReportsPage />} />
+        <Route path="webhooks" element={<AdminWebhooksPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
