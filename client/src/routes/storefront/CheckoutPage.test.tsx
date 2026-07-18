@@ -59,7 +59,8 @@ describe('CheckoutPage', () => {
     await waitFor(() => expect(screen.getByText(/order summary/i)).toBeInTheDocument())
 
     await user.type(screen.getByLabelText(/discount code/i), 'WELCOME10')
-    await user.click(screen.getByRole('button', { name: /^apply$/i }))
+    // The first "Apply" button is the discount one (gift-card entry adds a second).
+    await user.click(screen.getAllByRole('button', { name: /^apply$/i })[0])
 
     await waitFor(() => expect(screen.getByText(/WELCOME10 applied/i)).toBeInTheDocument())
   })

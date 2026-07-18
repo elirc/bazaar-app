@@ -19,6 +19,7 @@ import AdminOrderDetailPage from './routes/admin/AdminOrderDetailPage'
 import AdminDiscountsPage from './routes/admin/AdminDiscountsPage'
 import AdminReviewsPage from './routes/admin/AdminReviewsPage'
 import AdminReturnsPage from './routes/admin/AdminReturnsPage'
+import AdminGiftCardsPage from './routes/admin/AdminGiftCardsPage'
 
 export default function App() {
   return (
@@ -51,6 +52,7 @@ export default function App() {
         <Route path="discounts" element={<AdminDiscountsPage />} />
         <Route path="reviews" element={<AdminReviewsPage />} />
         <Route path="returns" element={<AdminReturnsPage />} />
+        <Route path="gift-cards" element={<AdminGiftCardsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

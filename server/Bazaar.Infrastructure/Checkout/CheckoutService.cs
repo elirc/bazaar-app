@@ -1,11 +1,12 @@
 using Bazaar.Domain;
-using Bazaar.Domain.Checkout;
 using Bazaar.Domain.Common;
 using Bazaar.Domain.Discounts;
+using Bazaar.Domain.GiftCards;
 using Bazaar.Domain.Orders;
 using Bazaar.Domain.Payments;
 using Bazaar.Domain.Shipping;
 using Bazaar.Infrastructure.Persistence;
+using Bazaar.Infrastructure.Tax;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bazaar.Infrastructure.Checkout;
@@ -16,7 +17,8 @@ public sealed record CheckoutCommand(
     Address ShippingAddress,
     string? DiscountCode = null,
     Guid? CustomerId = null,
-    string? ShippingMethodCode = null);
+    string? ShippingMethodCode = null,
+    string? GiftCardCode = null);
 
 public enum CheckoutStatus
 {
@@ -26,6 +28,7 @@ public enum CheckoutStatus
     InsufficientStock,
     InvalidDiscount,
     InvalidShippingMethod,
+    InvalidGiftCard,
     PaymentDeclined,
 }
 
@@ -43,12 +46,12 @@ public sealed class CheckoutService
 {
     private readonly BazaarDbContext _db;
     private readonly IPaymentGateway _gateway;
-    private readonly ITaxCalculator _tax;
+    private readonly ITaxService _tax;
 
     public CheckoutService(
         BazaarDbContext db,
         IPaymentGateway gateway,
-        ITaxCalculator tax)
+        ITaxService tax)
     {
         _db = db;
         _gateway = gateway;
@@ -93,7 +96,12 @@ public sealed class CheckoutService
             Money.Zero(currency),
             (acc, i) => acc.Add(i.Variant!.Price.MultiplyBy(i.Quantity)));
         var itemCount = activeItems.Sum(i => i.Quantity);
-        var tax = _tax.CalculateTax(subtotal);
+
+        // Tax by the buyer's zone and each line's product tax category (falls back to the flat rate).
+        var taxLines = activeItems
+            .Select(i => (i.Variant!.Price.Amount * i.Quantity, i.Variant!.Product?.TaxCategory ?? "standard"))
+            .ToList();
+        var tax = await _tax.CalculateTaxAsync(command.ShippingAddress, taxLines, currency, ct);
 
         // Resolve the shipping method (requested code, else the default) and price it.
         var methods = await _db.ShippingMethods.Where(m => m.IsActive).ToListAsync(ct);
@@ -126,6 +134,20 @@ public sealed class CheckoutService
 
         var grandTotal = subtotal.Add(tax).Add(shipping).Subtract(discount);
 
+        // Gift card is tendered last (after discount -> tax -> shipping): it reduces the amount charged.
+        var giftCardApplied = Money.Zero(currency);
+        GiftCard? giftCard = null;
+        if (!string.IsNullOrWhiteSpace(command.GiftCardCode))
+        {
+            var code = command.GiftCardCode.Trim().ToUpperInvariant();
+            giftCard = await _db.GiftCards.FirstOrDefaultAsync(g => g.Code == code, ct);
+            if (giftCard is null || !giftCard.IsRedeemable)
+                return CheckoutOutcome.Fail(CheckoutStatus.InvalidGiftCard, "That gift card is not valid.");
+            giftCardApplied = giftCard.AmountToApply(grandTotal);
+        }
+
+        var amountToCharge = grandTotal.Subtract(giftCardApplied);
+
         var order = new Order
         {
             Number = await NextOrderNumberAsync(ct),
@@ -141,6 +163,8 @@ public sealed class CheckoutService
             GrandTotal = grandTotal,
             DiscountCode = appliedCode?.Code,
             ShippingMethod = method?.Name,
+            GiftCardTotal = giftCardApplied,
+            GiftCardCode = giftCard?.Code,
         };
 
         foreach (var item in activeItems)
@@ -158,13 +182,18 @@ public sealed class CheckoutService
             });
         }
 
-        var payment = await _gateway.ChargeAsync(new PaymentRequest(order.Number, grandTotal, command.Email), ct);
-        if (!payment.Succeeded)
-            return CheckoutOutcome.Fail(CheckoutStatus.PaymentDeclined, payment.FailureReason ?? "Payment was declined.");
+        // Only hit the payment gateway for the remainder not covered by the gift card.
+        if (amountToCharge.Amount > 0m)
+        {
+            var payment = await _gateway.ChargeAsync(new PaymentRequest(order.Number, amountToCharge, command.Email), ct);
+            if (!payment.Succeeded)
+                return CheckoutOutcome.Fail(CheckoutStatus.PaymentDeclined, payment.FailureReason ?? "Payment was declined.");
+        }
 
         foreach (var item in activeItems)
             inventoryByVariant[item.VariantId].Commit(item.Quantity);
 
+        giftCard?.Redeem(giftCardApplied);
         appliedCode?.MarkRedeemed();
         order.TransitionTo(OrderStatus.Paid);
         cart.Status = CartStatus.Converted;

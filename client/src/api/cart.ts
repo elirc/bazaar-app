@@ -64,6 +64,7 @@ export interface CheckoutBody {
   shippingAddress: AddressInput
   discountCode?: string
   shippingMethodCode?: string
+  giftCardCode?: string
 }
 
 export function checkout(body: CheckoutBody) {

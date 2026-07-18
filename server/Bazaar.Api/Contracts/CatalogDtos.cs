@@ -41,7 +41,8 @@ public sealed record ProductDetailDto(
     IReadOnlyList<VariantDto> Variants,
     IReadOnlyList<string> Collections,
     double? AverageRating = null,
-    int ReviewCount = 0);
+    int ReviewCount = 0,
+    string TaxCategory = "standard");
 
 public sealed record CollectionDto(
     Guid Id,
@@ -113,6 +114,9 @@ public sealed record CreateProductRequest
     [StringLength(120)]
     public string? Vendor { get; init; }
 
+    [StringLength(40)]
+    public string? TaxCategory { get; init; }
+
     public string? Status { get; init; }
 
     public List<ImageInput> Images { get; init; } = new();
@@ -133,6 +137,9 @@ public sealed record UpdateProductRequest
 
     [StringLength(120)]
     public string? Vendor { get; init; }
+
+    [StringLength(40)]
+    public string? TaxCategory { get; init; }
 
     public string? Status { get; init; }
 

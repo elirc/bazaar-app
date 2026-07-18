@@ -88,6 +88,8 @@ public sealed record OrderDto(
     MoneyDto GrandTotal,
     string? DiscountCode,
     string? ShippingMethod,
+    MoneyDto GiftCardTotal,
+    string? GiftCardCode,
     IReadOnlyList<OrderLineDto> Items,
     DateTimeOffset PlacedAt);
 
@@ -130,4 +132,7 @@ public sealed record CheckoutRequest
 
     /// <summary>Selected shipping method code; when omitted the default method is used.</summary>
     public string? ShippingMethodCode { get; init; }
+
+    /// <summary>Optional gift card tendered toward the total.</summary>
+    public string? GiftCardCode { get; init; }
 }

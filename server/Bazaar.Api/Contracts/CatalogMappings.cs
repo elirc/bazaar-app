@@ -38,7 +38,8 @@ public static class CatalogMappings
             .ToList(),
         product.Collections.Select(c => c.Slug).OrderBy(s => s).ToList(),
         averageRating,
-        reviewCount);
+        reviewCount,
+        product.TaxCategory);
 
     public static CollectionDto ToDto(this Collection collection, int productCount) =>
         new(collection.Id, collection.Slug, collection.Title, collection.Description, productCount);

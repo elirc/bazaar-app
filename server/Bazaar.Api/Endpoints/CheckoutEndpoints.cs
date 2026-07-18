@@ -29,7 +29,7 @@ public static class CheckoutEndpoints
 
         var command = new CheckoutCommand(
             request.CartToken!, request.Email!, request.ShippingAddress!.ToAddress(),
-            request.DiscountCode, principal.GetCustomerId(), request.ShippingMethodCode);
+            request.DiscountCode, principal.GetCustomerId(), request.ShippingMethodCode, request.GiftCardCode);
         var outcome = await checkout.CheckoutAsync(command, ct);
 
         return outcome.Status switch
@@ -40,6 +40,7 @@ public static class CheckoutEndpoints
             CheckoutStatus.InsufficientStock => Results.Problem(outcome.Detail, statusCode: StatusCodes.Status409Conflict, title: "Insufficient stock"),
             CheckoutStatus.InvalidDiscount => Results.Problem(outcome.Detail, statusCode: StatusCodes.Status400BadRequest, title: "Invalid discount"),
             CheckoutStatus.InvalidShippingMethod => Results.Problem(outcome.Detail, statusCode: StatusCodes.Status400BadRequest, title: "Invalid shipping method"),
+            CheckoutStatus.InvalidGiftCard => Results.Problem(outcome.Detail, statusCode: StatusCodes.Status400BadRequest, title: "Invalid gift card"),
             CheckoutStatus.PaymentDeclined => Results.Problem(outcome.Detail, statusCode: StatusCodes.Status402PaymentRequired, title: "Payment declined"),
             _ => Results.Problem("Checkout failed."),
         };

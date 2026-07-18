@@ -104,6 +104,7 @@ public static class AdminCatalogEndpoints
             Slug = request.Slug!,
             Description = request.Description ?? string.Empty,
             Vendor = request.Vendor,
+            TaxCategory = string.IsNullOrWhiteSpace(request.TaxCategory) ? "standard" : request.TaxCategory!.Trim().ToLowerInvariant(),
             Status = status,
         };
 
@@ -161,6 +162,8 @@ public static class AdminCatalogEndpoints
         product.Title = request.Title!;
         product.Description = request.Description ?? string.Empty;
         product.Vendor = request.Vendor;
+        if (!string.IsNullOrWhiteSpace(request.TaxCategory))
+            product.TaxCategory = request.TaxCategory!.Trim().ToLowerInvariant();
         product.Status = status;
         product.UpdatedAt = DateTimeOffset.UtcNow;
 

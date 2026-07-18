@@ -12,6 +12,10 @@ public class Product
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string? Vendor { get; set; }
+
+    /// <summary>Tax category code used to look up the per-category rate in the buyer's tax zone (default "standard").</summary>
+    public string TaxCategory { get; set; } = "standard";
+
     public ProductStatus Status { get; set; } = ProductStatus.Draft;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;

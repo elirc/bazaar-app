@@ -13,6 +13,7 @@ export default function AdminLayout() {
           <NavLink to="/admin/discounts">Discounts</NavLink>
           <NavLink to="/admin/reviews">Reviews</NavLink>
           <NavLink to="/admin/returns">Returns</NavLink>
+          <NavLink to="/admin/gift-cards">Gift cards</NavLink>
           <NavLink to="/">← Back to store</NavLink>
         </nav>
       </aside>

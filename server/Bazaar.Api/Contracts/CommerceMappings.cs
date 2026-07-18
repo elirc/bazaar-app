@@ -116,6 +116,8 @@ public static class CommerceMappings
         order.GrandTotal.ToDto(),
         order.DiscountCode,
         order.ShippingMethod,
+        order.GiftCardTotal.ToDto(),
+        order.GiftCardCode,
         order.Items.Select(li => new OrderLineDto(li.Id, li.VariantId, li.Sku, li.Title, li.Quantity, li.UnitPrice.ToDto(), li.LineTotal.ToDto())).ToList(),
         order.PlacedAt);
 

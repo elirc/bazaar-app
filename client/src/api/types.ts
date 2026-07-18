@@ -58,6 +58,7 @@ export interface ProductDetail {
   collections: string[]
   averageRating: number | null
   reviewCount: number
+  taxCategory: string
 }
 
 export interface Review {
@@ -201,8 +202,25 @@ export interface Order {
   grandTotal: Money
   discountCode: string | null
   shippingMethod: string | null
+  giftCardTotal: Money
+  giftCardCode: string | null
   items: OrderLine[]
   placedAt: string
+}
+
+export interface GiftCard {
+  id: string
+  code: string
+  balance: Money
+  initialBalance: Money
+  isActive: boolean
+  createdAt: string
+}
+
+export interface GiftCardBalance {
+  code: string
+  valid: boolean
+  balance: Money | null
 }
 
 export interface ShippingOption {

@@ -3,9 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useCart } from '../../cart/CartContext'
 import { checkout, getShippingOptions, previewDiscount } from '../../api/cart'
+import { checkGiftCardBalance } from '../../api/giftcards'
 import { ApiError } from '../../api/client'
 import { formatMoney } from '../../lib/format'
-import type { DiscountPreview } from '../../api/types'
+import type { DiscountPreview, GiftCardBalance } from '../../api/types'
 
 export default function CheckoutPage() {
   const { cart, resetCart } = useCart()
@@ -23,6 +24,8 @@ export default function CheckoutPage() {
   const [discountInput, setDiscountInput] = useState('')
   const [discount, setDiscount] = useState<DiscountPreview | null>(null)
   const [shippingCode, setShippingCode] = useState<string | null>(null)
+  const [giftCardInput, setGiftCardInput] = useState('')
+  const [giftCard, setGiftCard] = useState<GiftCardBalance | null>(null)
 
   const shippingQuery = useQuery({
     queryKey: ['shipping-options', cart?.token],
@@ -42,6 +45,11 @@ export default function CheckoutPage() {
     onSuccess: (preview) => setDiscount(preview),
   })
 
+  const applyGiftCard = useMutation({
+    mutationFn: () => checkGiftCardBalance(giftCardInput.trim()),
+    onSuccess: (balance) => setGiftCard(balance),
+  })
+
   const mutation = useMutation({
     mutationFn: () =>
       checkout({
@@ -49,6 +57,7 @@ export default function CheckoutPage() {
         email,
         discountCode: discount?.valid ? discount.code : undefined,
         shippingMethodCode: shippingCode ?? undefined,
+        giftCardCode: giftCard?.valid ? giftCard.code : undefined,
         shippingAddress: {
           name,
           line1,
@@ -197,6 +206,33 @@ export default function CheckoutPage() {
             )}
             {discount && !discount.valid && (
               <p className="error" role="status">{discount.reason ?? 'Invalid code.'}</p>
+            )}
+          </div>
+
+          <div className="checkout__discount">
+            <label htmlFor="gift-card-code">Gift card</label>
+            <div className="checkout__discount-row">
+              <input
+                id="gift-card-code"
+                value={giftCardInput}
+                onChange={(e) => setGiftCardInput(e.target.value.toUpperCase())}
+                placeholder="e.g. GIFT25"
+              />
+              <button
+                type="button"
+                onClick={() => applyGiftCard.mutate()}
+                disabled={!giftCardInput.trim() || applyGiftCard.isPending}
+              >
+                Apply
+              </button>
+            </div>
+            {giftCard && giftCard.valid && (
+              <p className="success" role="status">
+                {giftCard.code} — {formatMoney(giftCard.balance)} available
+              </p>
+            )}
+            {giftCard && !giftCard.valid && (
+              <p className="error" role="status">That gift card is not valid.</p>
             )}
           </div>
 
