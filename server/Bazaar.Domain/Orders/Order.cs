@@ -46,11 +46,15 @@ public class Order
         return item;
     }
 
-    /// <summary>Valid lifecycle transitions: Pending -> Paid/Cancelled; Paid -> Fulfilled/Refunded/Cancelled; Fulfilled -> Refunded.</summary>
+    /// <summary>
+    /// Valid MANUAL lifecycle transitions. Fulfillment (Paid -> PartiallyFulfilled/Fulfilled) is
+    /// driven by shipment coverage, not by this table. Cancellation is blocked once anything ships.
+    /// </summary>
     public static bool CanTransition(OrderStatus from, OrderStatus to) => from switch
     {
         OrderStatus.Pending => to is OrderStatus.Paid or OrderStatus.Cancelled,
-        OrderStatus.Paid => to is OrderStatus.Fulfilled or OrderStatus.Refunded or OrderStatus.Cancelled,
+        OrderStatus.Paid => to is OrderStatus.Refunded or OrderStatus.Cancelled,
+        OrderStatus.PartiallyFulfilled => to is OrderStatus.Refunded,
         OrderStatus.Fulfilled => to is OrderStatus.Refunded,
         _ => false,
     };

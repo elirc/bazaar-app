@@ -1,6 +1,7 @@
 using Bazaar.Domain.Payments;
 using Bazaar.Infrastructure.Auth;
 using Bazaar.Infrastructure.Checkout;
+using Bazaar.Infrastructure.Fulfillment;
 using Bazaar.Infrastructure.Payments;
 using Bazaar.Infrastructure.Persistence;
 using Bazaar.Infrastructure.Returns;
@@ -23,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<ITaxService, ZoneTaxService>();
         services.AddScoped<CheckoutService>();
         services.AddScoped<ReturnService>();
+        services.AddScoped<FulfillmentService>();
 
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();

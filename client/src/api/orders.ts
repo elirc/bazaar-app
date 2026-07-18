@@ -31,6 +31,16 @@ export function transitionOrder(id: string, status: string) {
   })
 }
 
+export interface CreateShipmentBody {
+  carrier: string
+  trackingNumber: string
+  lines: { orderLineItemId: string; quantity: number }[]
+}
+
+export function createShipment(orderId: string, body: CreateShipmentBody) {
+  return apiRequest<Order>(`/api/admin/orders/${orderId}/shipments`, { method: 'POST', body })
+}
+
 export interface CreateDiscountBody {
   code: string
   type: string

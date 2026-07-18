@@ -102,7 +102,7 @@ public static class CommerceMappings
         Country = input.Country!.ToUpperInvariant(),
     };
 
-    public static OrderDto ToDto(this Order order) => new(
+    public static OrderDto ToDto(this Order order, IEnumerable<Shipment>? shipments = null) => new(
         order.Id,
         order.Number,
         order.Email,
@@ -119,7 +119,13 @@ public static class CommerceMappings
         order.GiftCardTotal.ToDto(),
         order.GiftCardCode,
         order.Items.Select(li => new OrderLineDto(li.Id, li.VariantId, li.Sku, li.Title, li.Quantity, li.UnitPrice.ToDto(), li.LineTotal.ToDto())).ToList(),
-        order.PlacedAt);
+        order.PlacedAt,
+        (shipments ?? Enumerable.Empty<Shipment>())
+            .OrderBy(s => s.ShippedAt)
+            .Select(s => new ShipmentDto(
+                s.Id, s.Carrier, s.TrackingNumber, s.ShippedAt,
+                s.Lines.Select(l => new ShipmentLineDto(l.OrderLineItemId, l.Sku, l.Title, l.Quantity)).ToList()))
+            .ToList());
 
     public static OrderSummaryDto ToSummaryDto(this Order order) => new(
         order.Id,

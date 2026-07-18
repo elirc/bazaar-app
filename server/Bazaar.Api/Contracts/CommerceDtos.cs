@@ -91,7 +91,8 @@ public sealed record OrderDto(
     MoneyDto GiftCardTotal,
     string? GiftCardCode,
     IReadOnlyList<OrderLineDto> Items,
-    DateTimeOffset PlacedAt);
+    DateTimeOffset PlacedAt,
+    IReadOnlyList<ShipmentDto> Shipments);
 
 public sealed record AddressInput
 {
