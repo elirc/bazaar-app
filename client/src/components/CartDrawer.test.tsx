@@ -81,4 +81,30 @@ describe('CartDrawer', () => {
     await waitFor(() => expect(puts).toHaveLength(1))
     expect(puts[0]).toContain('/api/cart/tok-123/items/v1')
   })
+
+  it('saves an active line for later via the API', async () => {
+    const savedCalls: string[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input)
+        if (url.includes('/saved') && init?.method === 'POST') {
+          savedCalls.push(url)
+          return Promise.resolve(jsonResponse({ ...cartPayload, itemCount: 0, savedCount: 1, subtotal: { amount: 0, currency: 'USD' }, items: [{ ...cartPayload.items[0], savedForLater: true }] }))
+        }
+        return Promise.resolve(jsonResponse(cartPayload))
+      }),
+    )
+
+    const user = userEvent.setup()
+    renderCart()
+
+    await user.click(screen.getByRole('button', { name: /open cart/i }))
+    await waitFor(() => expect(screen.getByTestId('cart-line')).toBeInTheDocument())
+
+    await user.click(screen.getByRole('button', { name: /save for later/i }))
+    await waitFor(() => expect(savedCalls).toHaveLength(1))
+    expect(savedCalls[0]).toContain('/api/cart/tok-123/items/v1/saved')
+    await waitFor(() => expect(screen.getByTestId('saved-line')).toBeInTheDocument())
+  })
 })

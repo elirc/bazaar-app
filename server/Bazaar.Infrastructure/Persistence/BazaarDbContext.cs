@@ -8,6 +8,7 @@ using Bazaar.Domain.Inventory;
 using Bazaar.Domain.Orders;
 using Bazaar.Domain.Reviews;
 using Bazaar.Domain.Shipping;
+using Bazaar.Domain.Wishlists;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -32,6 +33,8 @@ public class BazaarDbContext : DbContext
     public DbSet<ShippingMethod> ShippingMethods => Set<ShippingMethod>();
     public DbSet<ProductReview> ProductReviews => Set<ProductReview>();
     public DbSet<ReviewVote> ReviewVotes => Set<ReviewVote>();
+    public DbSet<Wishlist> Wishlists => Set<Wishlist>();
+    public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -207,6 +210,28 @@ public class BazaarDbContext : DbContext
         {
             e.HasKey(v => v.Id);
             e.HasIndex(v => new { v.ReviewId, v.CustomerId }).IsUnique();
+        });
+
+        b.Entity<Wishlist>(e =>
+        {
+            e.HasKey(w => w.Id);
+            e.HasIndex(w => w.CustomerId);
+            e.Property(w => w.Name).IsRequired().HasMaxLength(120);
+            e.HasMany(w => w.Items)
+                .WithOne()
+                .HasForeignKey(i => i.WishlistId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.Navigation(w => w.Items).UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        b.Entity<WishlistItem>(e =>
+        {
+            e.HasKey(i => i.Id);
+            e.HasIndex(i => new { i.WishlistId, i.VariantId }).IsUnique();
+            e.HasOne(i => i.Variant)
+                .WithMany()
+                .HasForeignKey(i => i.VariantId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         b.Entity<DiscountCode>(e =>

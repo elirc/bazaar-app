@@ -5,6 +5,7 @@ import ProductDetailPage from './routes/storefront/ProductDetailPage'
 import CheckoutPage from './routes/storefront/CheckoutPage'
 import OrderConfirmationPage from './routes/storefront/OrderConfirmationPage'
 import AccountOrdersPage from './routes/storefront/AccountOrdersPage'
+import WishlistPage from './routes/storefront/WishlistPage'
 import LoginPage from './routes/auth/LoginPage'
 import RegisterPage from './routes/auth/RegisterPage'
 import RequireAdmin from './auth/RequireAdmin'
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="order/:id" element={<OrderConfirmationPage />} />
         <Route path="account" element={<AccountOrdersPage />} />
+        <Route path="wishlist" element={<WishlistPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
       </Route>

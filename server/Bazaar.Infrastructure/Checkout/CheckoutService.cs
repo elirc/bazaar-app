@@ -63,16 +63,19 @@ public sealed class CheckoutService
 
         if (cart is null)
             return CheckoutOutcome.Fail(CheckoutStatus.CartNotFound, "Cart not found.");
-        if (cart.Items.Count == 0)
+
+        // Saved-for-later lines never enter checkout.
+        var activeItems = cart.Items.Where(i => !i.SavedForLater).ToList();
+        if (activeItems.Count == 0)
             return CheckoutOutcome.Fail(CheckoutStatus.CartEmpty, "The cart is empty.");
 
-        var variantIds = cart.Items.Select(i => i.VariantId).ToList();
+        var variantIds = activeItems.Select(i => i.VariantId).ToList();
         var inventory = await _db.InventoryItems
             .Where(i => variantIds.Contains(i.VariantId))
             .ToListAsync(ct);
         var inventoryByVariant = inventory.ToDictionary(i => i.VariantId);
 
-        foreach (var item in cart.Items)
+        foreach (var item in activeItems)
         {
             if (!inventoryByVariant.TryGetValue(item.VariantId, out var stock) || !stock.CanReserve(item.Quantity))
             {
@@ -82,14 +85,14 @@ public sealed class CheckoutService
         }
 
         // Reserve stock while we attempt payment (in-memory; only persisted if we save on success).
-        foreach (var item in cart.Items)
+        foreach (var item in activeItems)
             inventoryByVariant[item.VariantId].Reserve(item.Quantity);
 
-        var currency = cart.Items[0].Variant!.Price.Currency;
-        var subtotal = cart.Items.Aggregate(
+        var currency = activeItems[0].Variant!.Price.Currency;
+        var subtotal = activeItems.Aggregate(
             Money.Zero(currency),
             (acc, i) => acc.Add(i.Variant!.Price.MultiplyBy(i.Quantity)));
-        var itemCount = cart.Items.Sum(i => i.Quantity);
+        var itemCount = activeItems.Sum(i => i.Quantity);
         var tax = _tax.CalculateTax(subtotal);
 
         // Resolve the shipping method (requested code, else the default) and price it.
@@ -107,7 +110,7 @@ public sealed class CheckoutService
             method = methods.FirstOrDefault(m => m.IsDefault) ?? methods.OrderBy(m => m.DisplayOrder).FirstOrDefault();
         }
 
-        var totalWeightGrams = cart.Items.Sum(i => i.Variant!.WeightGrams * i.Quantity);
+        var totalWeightGrams = activeItems.Sum(i => i.Variant!.WeightGrams * i.Quantity);
         var shipping = method?.CalculateCost(subtotal, itemCount, totalWeightGrams) ?? Money.Zero(currency);
 
         var discount = Money.Zero(currency);
@@ -140,7 +143,7 @@ public sealed class CheckoutService
             ShippingMethod = method?.Name,
         };
 
-        foreach (var item in cart.Items)
+        foreach (var item in activeItems)
         {
             var variant = item.Variant!;
             var productTitle = variant.Product?.Title ?? variant.Title;
@@ -159,7 +162,7 @@ public sealed class CheckoutService
         if (!payment.Succeeded)
             return CheckoutOutcome.Fail(CheckoutStatus.PaymentDeclined, payment.FailureReason ?? "Payment was declined.");
 
-        foreach (var item in cart.Items)
+        foreach (var item in activeItems)
             inventoryByVariant[item.VariantId].Commit(item.Quantity);
 
         appliedCode?.MarkRedeemed();

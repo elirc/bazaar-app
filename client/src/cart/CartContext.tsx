@@ -1,12 +1,20 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { addCartItem, createCart, getCart, removeCartItem, updateCartItem } from '../api/cart'
+import {
+  addCartItem,
+  createCart,
+  getCart,
+  removeCartItem,
+  setCartItemSaved,
+  updateCartItem,
+} from '../api/cart'
 import type { Cart } from '../api/types'
 
 const TOKEN_KEY = 'bazaar_cart_token'
 
 interface CartContextValue {
   cart: Cart | undefined
+  token: string | null
   itemCount: number
   isLoading: boolean
   isOpen: boolean
@@ -16,6 +24,8 @@ interface CartContextValue {
   addItem: (variantId: string, quantity?: number) => Promise<void>
   updateItem: (variantId: string, quantity: number) => Promise<void>
   removeItem: (variantId: string) => Promise<void>
+  setSaved: (variantId: string, saved: boolean) => Promise<void>
+  applyCart: (cart: Cart) => void
   resetCart: () => void
 }
 
@@ -85,6 +95,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [token, queryClient],
   )
 
+  const setSaved = useCallback(
+    async (variantId: string, saved: boolean) => {
+      if (!token) return
+      const updated = await setCartItemSaved(token, variantId, saved)
+      queryClient.setQueryData(['cart', token], updated)
+    },
+    [token, queryClient],
+  )
+
+  const applyCart = useCallback(
+    (next: Cart) => {
+      persistToken(next.token)
+      queryClient.setQueryData(['cart', next.token], next)
+      setIsOpen(true)
+    },
+    [persistToken, queryClient],
+  )
+
   const resetCart = useCallback(() => {
     persistToken(null)
     setIsOpen(false)
@@ -94,6 +122,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const value: CartContextValue = {
     cart,
+    token,
     itemCount: cart?.itemCount ?? 0,
     isLoading: cartQuery.isLoading,
     isOpen,
@@ -103,6 +132,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     addItem,
     updateItem,
     removeItem,
+    setSaved,
+    applyCart,
     resetCart,
   }
 

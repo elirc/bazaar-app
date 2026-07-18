@@ -22,7 +22,8 @@ public class Cart
 
     public IReadOnlyList<CartLineItem> Items => _items;
 
-    public int TotalQuantity => _items.Sum(i => i.Quantity);
+    /// <summary>Active (not saved-for-later) quantity — the quantity that counts toward totals and checkout.</summary>
+    public int TotalQuantity => _items.Where(i => !i.SavedForLater).Sum(i => i.Quantity);
 
     /// <summary>Add a variant, merging with an existing line for the same variant. Enforces quantity rules.</summary>
     public CartLineItem AddItem(ProductVariant variant, int quantity)
@@ -39,6 +40,7 @@ public class Cart
         if (existing is not null)
         {
             existing.Quantity = newQuantity;
+            existing.SavedForLater = false; // adding to cart makes the line active again
             Touch();
             return existing;
         }
@@ -79,6 +81,16 @@ public class Cart
         if (item is null) return;
         _items.Remove(item);
         Touch();
+    }
+
+    /// <summary>Toggle a line between active and saved-for-later. Returns false if the line is absent.</summary>
+    public bool SetSavedForLater(Guid variantId, bool saved)
+    {
+        var item = _items.FirstOrDefault(i => i.VariantId == variantId);
+        if (item is null) return false;
+        item.SavedForLater = saved;
+        Touch();
+        return true;
     }
 
     public void Clear()

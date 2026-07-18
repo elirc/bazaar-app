@@ -114,6 +114,7 @@ export interface CartLine {
   quantity: number
   lineTotal: Money
   available: number
+  savedForLater: boolean
 }
 
 export interface Cart {
@@ -122,6 +123,26 @@ export interface Cart {
   items: CartLine[]
   subtotal: Money
   itemCount: number
+  savedCount: number
+}
+
+export interface WishlistItem {
+  variantId: string
+  productSlug: string
+  productTitle: string
+  variantTitle: string
+  sku: string
+  price: Money
+  available: number
+  backInStock: boolean
+  addedAt: string
+}
+
+export interface Wishlist {
+  id: string
+  name: string
+  isDefault: boolean
+  items: WishlistItem[]
 }
 
 export interface Address {

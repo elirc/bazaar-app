@@ -19,6 +19,7 @@ public static class CartEndpoints
         group.MapGet("/{token}", GetCart);
         group.MapPost("/{token}/items", AddItem);
         group.MapPut("/{token}/items/{variantId:guid}", UpdateItem);
+        group.MapPost("/{token}/items/{variantId:guid}/saved", SetSavedForLater);
         group.MapDelete("/{token}/items/{variantId:guid}", RemoveItem);
 
         return app;
@@ -81,6 +82,19 @@ public static class CartEndpoints
             return Results.NotFound();
 
         cart.UpdateQuantity(variantId, request.Quantity);
+        await db.SaveChangesAsync(ct);
+        return Results.Ok(await LoadCartDto(db, token, ct));
+    }
+
+    private static async Task<IResult> SetSavedForLater(
+        BazaarDbContext db, string token, Guid variantId, SaveForLaterRequest request, CancellationToken ct)
+    {
+        var cart = await db.Carts.Include(c => c.Items)
+            .FirstOrDefaultAsync(c => c.Token == token && c.Status == CartStatus.Open, ct);
+        if (cart is null) return Results.NotFound();
+        if (!cart.SetSavedForLater(variantId, request.Saved))
+            return Results.NotFound();
+
         await db.SaveChangesAsync(ct);
         return Results.Ok(await LoadCartDto(db, token, ct));
     }
