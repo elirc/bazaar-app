@@ -1,9 +1,10 @@
 using Bazaar.Domain.Catalog;
+using Bazaar.Domain.Common;
 
 namespace Bazaar.Domain.Carts;
 
 /// <summary>A guest shopping cart, identified by an opaque token. Aggregate root over its line items.</summary>
-public class Cart
+public class Cart : IConcurrencyStamped
 {
     /// <summary>Maximum quantity of a single variant permitted in a cart line.</summary>
     public const int MaxQuantityPerLine = 99;
@@ -12,6 +13,9 @@ public class Cart
 
     public Guid Id { get; private set; } = Guid.NewGuid();
     public string Token { get; set; } = Guid.NewGuid().ToString("N");
+
+    /// <summary>Optimistic-concurrency token, refreshed on every cart update.</summary>
+    public Guid ConcurrencyStamp { get; set; } = Guid.NewGuid();
 
     /// <summary>Owning customer when the cart is created (or claimed) by a signed-in account; null for guests.</summary>
     public Guid? CustomerId { get; set; }

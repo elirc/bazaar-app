@@ -14,7 +14,7 @@ public static class CheckoutEndpoints
 {
     public static IEndpointRouteBuilder MapCheckoutEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/checkout", Checkout).WithTags("Checkout");
+        app.MapPost("/api/checkout", Checkout).WithTags("Checkout").RequireRateLimiting("checkout");
         app.MapGet("/api/orders/{id:guid}", GetOrder).WithTags("Orders");
         return app;
     }

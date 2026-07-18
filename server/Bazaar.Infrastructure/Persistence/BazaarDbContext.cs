@@ -48,6 +48,28 @@ public class BazaarDbContext : DbContext
     public DbSet<WebhookSubscription> WebhookSubscriptions => Set<WebhookSubscription>();
     public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
 
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        RefreshConcurrencyStamps();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        RefreshConcurrencyStamps();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    /// <summary>Assign a fresh concurrency stamp to every modified stamped entity so stale writes conflict.</summary>
+    private void RefreshConcurrencyStamps()
+    {
+        foreach (var entry in ChangeTracker.Entries<IConcurrencyStamped>())
+        {
+            if (entry.State == EntityState.Modified)
+                entry.Entity.ConcurrencyStamp = Guid.NewGuid();
+        }
+    }
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         // SQLite cannot order/compare DateTimeOffset: persist every one as UTC ticks (long).
@@ -135,6 +157,7 @@ public class BazaarDbContext : DbContext
         {
             e.HasKey(i => i.Id);
             e.HasIndex(i => i.VariantId).IsUnique();
+            e.Property(i => i.ConcurrencyStamp).IsConcurrencyToken();
             e.Ignore(i => i.Available);
             e.HasOne(i => i.Variant)
                 .WithOne()
@@ -148,6 +171,7 @@ public class BazaarDbContext : DbContext
             e.Property(c => c.Token).IsRequired().HasMaxLength(64);
             e.HasIndex(c => c.Token).IsUnique();
             e.HasIndex(c => c.CustomerId);
+            e.Property(c => c.ConcurrencyStamp).IsConcurrencyToken();
             e.Ignore(c => c.TotalQuantity);
 
             e.HasMany(c => c.Items)

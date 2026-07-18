@@ -3,6 +3,8 @@
 export interface HealthStatus {
   status: string
   service: string
+  checks?: { database?: string }
+  timestamp?: string
 }
 
 export interface Money {

@@ -13,6 +13,13 @@ describe('ApiStatus', () => {
     await waitFor(() => expect(screen.getByTestId('api-status')).toHaveTextContent(/api ok/i))
   })
 
+  it('shows the database probe result when present', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(jsonResponse({ status: 'ok', service: 'bazaar-api', checks: { database: 'ok' } }))))
+    renderWithProviders(<ApiStatus />)
+
+    await waitFor(() => expect(screen.getByTestId('api-status')).toHaveTextContent(/db ok/i))
+  })
+
   it('shows offline when the request fails', async () => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(jsonResponse({ title: 'boom' }, 500))))
     renderWithProviders(<ApiStatus />)
