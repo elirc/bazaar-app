@@ -32,9 +32,22 @@ webhooks), built as a monorepo with a .NET 10 API and a React + TypeScript clien
 - Order management: list, detail, lifecycle transitions, and **fulfilment** — partial
   shipments with carrier/tracking; order status is derived from shipment coverage
   (`PartiallyFulfilled` / `Fulfilled`).
-- Discounts, **review moderation**, **returns queue** (approve → gateway refund + restock),
+- Discounts, **review moderation**, **returns queue** (approve → tender-aware refund + restock),
   **gift-card** issuance, **reports** (sales over time with inline bars, top products, low
   stock, discount usage), and **webhook** settings (subscriptions + delivery log).
+
+## Documentation
+
+Full docs live in [`docs/`](docs/):
+
+- [Architecture](docs/architecture.md) — layering, the Money/cents design, the totals pipeline &
+  tender ordering, shipment-derived status, the RMA/refund flow, webhooks, concurrency, auth/roles.
+- [API reference](docs/api-reference.md) — every endpoint: method, route, auth, shapes, error codes.
+- [Getting started](docs/getting-started.md) — run both halves and walk an order from browse to a
+  refunded return (verified against a live run).
+- [Testing](docs/testing.md) — taxonomy, harnesses, the migration-drift guard, and the jsdom
+  flakiness policy.
+- [ADRs](docs/adr/README.md) — the load-bearing decisions and why.
 
 ## Prerequisites
 
@@ -151,6 +164,9 @@ bazaar-app/
   every update; a stale write raises `DbUpdateConcurrencyException`, mapped to a **409**.
 - **Fulfillment:** order status is derived from shipment coverage (not a manual transition);
   cancellation is blocked once anything ships.
+- **Refunds are tender-aware:** an approved return's refund is split between the payment card and any
+  gift card in proportion to how the order was paid, so a gift-card-funded order is never
+  over-refunded to the card (the gift-card share is restored to the card). See ADR 0011.
 - **Tax:** matched by zone (country/region + per-category rate); region-less addresses fall back
   to the flat rate so earlier totals are preserved.
 - **Webhooks:** HMAC-SHA256 signed, delivered best-effort with capped retries; the default sender
@@ -162,10 +178,12 @@ bazaar-app/
 
 ## Tests
 
-- **Server:** 180 tests (xUnit) — domain behaviour (Money, lifecycle, shipping/tax/refund/webhook
-  logic), EF persistence round-trips + concurrency, and WebApplicationFactory integration tests
-  over an in-memory SQLite database.
-- **Client:** 33 tests (Vitest + React Testing Library, fetch-stubbed).
+- **Server:** 217 tests (xUnit) — domain behaviour (Money, lifecycle, shipping/tax/refund/webhook
+  logic, tender-split refunds), EF persistence round-trips + concurrency, a **migration-drift
+  guard**, and WebApplicationFactory integration tests over an in-memory SQLite database.
+- **Client:** 38 tests (Vitest + React Testing Library, fetch-stubbed).
+
+See [`docs/testing.md`](docs/testing.md) for the taxonomy, harnesses, and the jsdom flakiness policy.
 
 ## Sprint history
 
