@@ -79,6 +79,7 @@ app.MapAdminCatalogEndpoints();
 app.MapAdminOrderEndpoints();
 app.MapAdminDiscountEndpoints();
 app.MapAdminReviewEndpoints();
+app.MapAdminReturnEndpoints();
 app.MapCartEndpoints();
 app.MapCheckoutEndpoints();
 app.MapShippingEndpoints();

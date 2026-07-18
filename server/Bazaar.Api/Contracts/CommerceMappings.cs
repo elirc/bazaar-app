@@ -3,12 +3,25 @@ using Bazaar.Domain.Common;
 using Bazaar.Domain.Customers;
 using Bazaar.Domain.Discounts;
 using Bazaar.Domain.Orders;
+using Bazaar.Domain.Returns;
 using Bazaar.Domain.Shipping;
 
 namespace Bazaar.Api.Contracts;
 
 public static class CommerceMappings
 {
+    public static ReturnRequestDto ToDto(this ReturnRequest r, string orderNumber) => new(
+        r.Id, r.OrderId, orderNumber, r.Status.ToString(), r.Reason,
+        r.RefundAmount.ToDto(),
+        r.Lines.Select(l => new ReturnLineDto(l.OrderLineItemId, l.Sku, l.Title, l.Quantity)).ToList(),
+        r.CreatedAt);
+
+    public static AdminReturnDto ToAdminDto(this ReturnRequest r, string orderNumber, string email) => new(
+        r.Id, r.OrderId, orderNumber, email, r.Status.ToString(), r.Reason,
+        r.RefundAmount.ToDto(),
+        r.Lines.Select(l => new ReturnLineDto(l.OrderLineItemId, l.Sku, l.Title, l.Quantity)).ToList(),
+        r.CreatedAt);
+
     public static ShippingOptionDto ToOptionDto(this ShippingMethod method, Money cost) => new(
         method.Code,
         method.Name,
@@ -103,7 +116,7 @@ public static class CommerceMappings
         order.GrandTotal.ToDto(),
         order.DiscountCode,
         order.ShippingMethod,
-        order.Items.Select(li => new OrderLineDto(li.Sku, li.Title, li.Quantity, li.UnitPrice.ToDto(), li.LineTotal.ToDto())).ToList(),
+        order.Items.Select(li => new OrderLineDto(li.Id, li.VariantId, li.Sku, li.Title, li.Quantity, li.UnitPrice.ToDto(), li.LineTotal.ToDto())).ToList(),
         order.PlacedAt);
 
     public static OrderSummaryDto ToSummaryDto(this Order order) => new(

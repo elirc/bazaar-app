@@ -1,6 +1,7 @@
 import { Link, Navigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { listAccountOrders } from '../../api/auth'
+import { listAccountReturns } from '../../api/returns'
 import { useAuth } from '../../auth/AuthContext'
 import { formatMoney } from '../../lib/format'
 import AddressBook from '../../components/AddressBook'
@@ -11,6 +12,12 @@ export default function AccountOrdersPage() {
   const ordersQuery = useQuery({
     queryKey: ['account-orders'],
     queryFn: ({ signal }) => listAccountOrders(signal),
+    enabled: isAuthenticated,
+  })
+
+  const returnsQuery = useQuery({
+    queryKey: ['account-returns'],
+    queryFn: ({ signal }) => listAccountReturns(signal),
     enabled: isAuthenticated,
   })
 
@@ -42,6 +49,27 @@ export default function AccountOrdersPage() {
             ))}
           </tbody>
         </table>
+      )}
+
+      {returnsQuery.data && returnsQuery.data.length > 0 && (
+        <>
+          <h2>Returns</h2>
+          <table>
+            <thead>
+              <tr><th>Order</th><th>Status</th><th>Refund</th><th>Requested</th></tr>
+            </thead>
+            <tbody>
+              {returnsQuery.data.map((rma) => (
+                <tr key={rma.id} data-testid="account-return-row">
+                  <td>{rma.orderNumber}</td>
+                  <td>{rma.status}</td>
+                  <td>{rma.status === 'Approved' ? formatMoney(rma.refundAmount) : '—'}</td>
+                  <td>{new Date(rma.createdAt).toLocaleDateString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
       )}
 
       <AddressBook />

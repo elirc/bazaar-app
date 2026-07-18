@@ -4,6 +4,7 @@ using Bazaar.Api.Contracts;
 using Bazaar.Api.Validation;
 using Bazaar.Domain.Customers;
 using Bazaar.Infrastructure.Persistence;
+using Bazaar.Infrastructure.Returns;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bazaar.Api.Endpoints;
@@ -20,7 +21,60 @@ public static class AccountEndpoints
         group.MapPost("/addresses", CreateAddress);
         group.MapPut("/addresses/{id:guid}", UpdateAddress);
         group.MapDelete("/addresses/{id:guid}", DeleteAddress);
+        group.MapGet("/returns", ListReturns);
+        group.MapPost("/orders/{orderId:guid}/returns", CreateReturn);
         return app;
+    }
+
+    // ---- Returns ----
+
+    private static async Task<IResult> ListReturns(BazaarDbContext db, ClaimsPrincipal principal, CancellationToken ct)
+    {
+        var customerId = principal.GetCustomerId();
+        if (customerId is null) return Results.Unauthorized();
+
+        var returns = await db.ReturnRequests.AsNoTracking().Include(r => r.Lines)
+            .Where(r => r.CustomerId == customerId)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync(ct);
+
+        var numbers = await OrderNumbers(db, returns.Select(r => r.OrderId), ct);
+        return Results.Ok(returns.Select(r => r.ToDto(numbers.GetValueOrDefault(r.OrderId, string.Empty))).ToList());
+    }
+
+    private static async Task<IResult> CreateReturn(
+        BazaarDbContext db, ReturnService returns, ClaimsPrincipal principal, Guid orderId, CreateReturnRequest request, CancellationToken ct)
+    {
+        var customerId = principal.GetCustomerId();
+        if (customerId is null) return Results.Unauthorized();
+        if (!RequestValidation.TryValidate(request, out var errors))
+            return Results.ValidationProblem(errors);
+
+        var command = new CreateReturnCommand(
+            orderId, customerId, request.Reason,
+            request.Lines.Select(l => new ReturnLineCommand(l.OrderLineItemId!.Value, l.Quantity)).ToList());
+        var outcome = await returns.CreateAsync(command, ct);
+
+        if (outcome.Status != ReturnCreateStatus.Ok)
+            return outcome.Status switch
+            {
+                ReturnCreateStatus.OrderNotFound => Results.Problem(outcome.Detail, statusCode: StatusCodes.Status404NotFound, title: "Order not found"),
+                ReturnCreateStatus.NotFulfilled => Results.Problem(outcome.Detail, statusCode: StatusCodes.Status409Conflict, title: "Order not returnable"),
+                ReturnCreateStatus.OverRefund => Results.Problem(outcome.Detail, statusCode: StatusCodes.Status409Conflict, title: "Over-refund"),
+                _ => Results.Problem(outcome.Detail, statusCode: StatusCodes.Status400BadRequest, title: "Invalid return"),
+            };
+
+        var number = (await OrderNumbers(db, new[] { orderId }, ct)).GetValueOrDefault(orderId, string.Empty);
+        return Results.Created($"/api/account/returns", outcome.Return!.ToDto(number));
+    }
+
+    private static async Task<Dictionary<Guid, string>> OrderNumbers(BazaarDbContext db, IEnumerable<Guid> orderIds, CancellationToken ct)
+    {
+        var ids = orderIds.Distinct().ToList();
+        return await db.Orders.AsNoTracking()
+            .Where(o => ids.Contains(o.Id))
+            .Select(o => new { o.Id, o.Number })
+            .ToDictionaryAsync(o => o.Id, o => o.Number, ct);
     }
 
     private static async Task<IResult> ListOrders(BazaarDbContext db, ClaimsPrincipal principal, CancellationToken ct)

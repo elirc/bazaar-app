@@ -4,6 +4,7 @@ using Bazaar.Infrastructure.Auth;
 using Bazaar.Infrastructure.Checkout;
 using Bazaar.Infrastructure.Payments;
 using Bazaar.Infrastructure.Persistence;
+using Bazaar.Infrastructure.Returns;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -21,6 +22,7 @@ public static class DependencyInjection
         services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
         services.AddSingleton<ITaxCalculator, FlatRateTaxCalculator>();
         services.AddScoped<CheckoutService>();
+        services.AddScoped<ReturnService>();
 
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();

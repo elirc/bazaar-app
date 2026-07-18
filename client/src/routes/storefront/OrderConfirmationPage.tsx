@@ -2,9 +2,12 @@ import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getOrder } from '../../api/cart'
 import { formatMoney } from '../../lib/format'
+import { useAuth } from '../../auth/AuthContext'
+import ReturnRequestForm from '../../components/ReturnRequestForm'
 
 export default function OrderConfirmationPage() {
   const { id } = useParams<{ id: string }>()
+  const { isAuthenticated } = useAuth()
   const { data: order, isLoading, isError } = useQuery({
     queryKey: ['order', id],
     queryFn: ({ signal }) => getOrder(id!, signal),
@@ -53,6 +56,8 @@ export default function OrderConfirmationPage() {
         </div>
         <div className="order-totals__grand"><span>Total</span><strong>{formatMoney(order.grandTotal)}</strong></div>
       </div>
+
+      {isAuthenticated && order.status === 'Fulfilled' && <ReturnRequestForm order={order} />}
 
       <Link to="/" className="button">Continue shopping</Link>
     </section>

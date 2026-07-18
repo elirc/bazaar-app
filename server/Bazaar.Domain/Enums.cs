@@ -45,6 +45,14 @@ public enum ReviewStatus
     Rejected,
 }
 
+/// <summary>Lifecycle of a return/refund request (RMA): Requested -> Approved (refunded + restocked) or Rejected.</summary>
+public enum ReturnStatus
+{
+    Requested,
+    Approved,
+    Rejected,
+}
+
 /// <summary>How a shipping method prices an order.</summary>
 public enum ShippingRateType
 {
