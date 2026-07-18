@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderWithProviders, jsonResponse } from '../test/utils'
 import { AuthProvider } from './AuthContext'
 import RequireAdmin from './RequireAdmin'
@@ -53,6 +55,33 @@ describe('RequireAdmin', () => {
     )
 
     await waitFor(() => expect(screen.getByText('Not authorized')).toBeInTheDocument())
+    expect(screen.queryByText('Secret admin area')).not.toBeInTheDocument()
+  })
+
+  it('redirects a guest to the sign-in page', async () => {
+    // No token in storage -> the guard navigates to /login instead of rendering the area.
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <MemoryRouter initialEntries={['/admin']}>
+            <Routes>
+              <Route
+                path="/admin"
+                element={
+                  <RequireAdmin>
+                    <div>Secret admin area</div>
+                  </RequireAdmin>
+                }
+              />
+              <Route path="/login" element={<div>Sign in page</div>} />
+            </Routes>
+          </MemoryRouter>
+        </AuthProvider>
+      </QueryClientProvider>,
+    )
+
+    await waitFor(() => expect(screen.getByText('Sign in page')).toBeInTheDocument())
     expect(screen.queryByText('Secret admin area')).not.toBeInTheDocument()
   })
 })

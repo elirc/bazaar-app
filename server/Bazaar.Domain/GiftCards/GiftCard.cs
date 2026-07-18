@@ -29,4 +29,14 @@ public class GiftCard
         var next = Balance.Amount - amount.Amount;
         Balance = new Money(next < 0m ? 0m : next, Balance.Currency);
     }
+
+    /// <summary>
+    /// Restore refunded value to the balance (e.g. when a gift-card-funded order is returned).
+    /// A fresh Money instance keeps the owned navigation independent for EF.
+    /// </summary>
+    public void Restore(Money amount)
+    {
+        if (amount.IsNegative) return;
+        Balance = new Money(Balance.Amount + amount.Amount, Balance.Currency);
+    }
 }

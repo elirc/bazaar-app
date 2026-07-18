@@ -42,4 +42,29 @@ describe('AdminReviewsPage', () => {
     expect(moderated[0].url).toContain('/api/admin/reviews/r1/moderate')
     expect(moderated[0].body).toMatchObject({ status: 'Approved' })
   })
+
+  it('rejects a pending review from the queue', async () => {
+    const moderated: { url: string; body: unknown }[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input)
+        if (url.includes('/moderate')) {
+          moderated.push({ url, body: JSON.parse(String(init?.body)) })
+          return Promise.resolve(jsonResponse({ id: 'r1', status: 'Rejected' }))
+        }
+        return Promise.resolve(jsonResponse(payload))
+      }),
+    )
+
+    const user = userEvent.setup()
+    renderWithProviders(<AdminReviewsPage />)
+
+    await waitFor(() => expect(screen.getByText('Good mug.')).toBeInTheDocument())
+    await user.click(screen.getByRole('button', { name: /reject/i }))
+
+    await waitFor(() => expect(moderated).toHaveLength(1))
+    expect(moderated[0].url).toContain('/api/admin/reviews/r1/moderate')
+    expect(moderated[0].body).toMatchObject({ status: 'Rejected' })
+  })
 })

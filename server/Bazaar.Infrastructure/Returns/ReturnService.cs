@@ -111,9 +111,24 @@ public sealed class ReturnService
         var order = await _db.Orders.Include(o => o.Items).FirstAsync(o => o.Id == request.OrderId, ct);
         var refund = ComputeRefund(order, request);
 
-        var result = await _gateway.RefundAsync(new RefundRequest(order.Number, refund, order.Email), ct);
-        if (!result.Succeeded)
-            return ReturnDecisionOutcome.Fail(ReturnDecisionStatus.RefundFailed, result.FailureReason ?? "Refund failed.");
+        // Tender-aware refund: only the card-funded share is sent to the gateway; the gift-card-funded
+        // share is restored to the originating gift card. This prevents over-refunding real money to the
+        // card on an order that a gift card partly (or wholly) paid for.
+        var (cardRefund, giftCardRefund) = SplitRefundByTender(order, refund);
+
+        if (cardRefund.Amount > 0m)
+        {
+            var result = await _gateway.RefundAsync(new RefundRequest(order.Number, cardRefund, order.Email), ct);
+            if (!result.Succeeded)
+                return ReturnDecisionOutcome.Fail(ReturnDecisionStatus.RefundFailed, result.FailureReason ?? "Refund failed.");
+            request.RefundReference = result.RefundId;
+        }
+
+        if (giftCardRefund.Amount > 0m && !string.IsNullOrWhiteSpace(order.GiftCardCode))
+        {
+            var giftCard = await _db.GiftCards.FirstOrDefaultAsync(g => g.Code == order.GiftCardCode, ct);
+            giftCard?.Restore(giftCardRefund);
+        }
 
         // Restock the returned quantities.
         var variantIds = request.Lines.Where(l => l.VariantId.HasValue).Select(l => l.VariantId!.Value).ToList();
@@ -125,7 +140,6 @@ public sealed class ReturnService
 
         request.Status = ReturnStatus.Approved;
         request.RefundAmount = refund;
-        request.RefundReference = result.RefundId;
         request.Touch();
 
         await _db.SaveChangesAsync(ct);
@@ -172,5 +186,28 @@ public sealed class ReturnService
         var taxShare = order.TaxTotal.Amount * ratio;
         var refund = returnedSubtotal - discountShare + taxShare;
         return new Money(refund < 0m ? 0m : refund, currency);
+    }
+
+    /// <summary>
+    /// Split a refund between the payment card and the gift card in proportion to how the order was
+    /// tendered. The card share can never exceed what was charged to the card (grand total less the
+    /// gift-card tender), so returns never over-refund real money. Orders with no gift card refund
+    /// entirely to the card, preserving the original behaviour. Cents are conserved exactly.
+    /// </summary>
+    public static (Money Card, Money GiftCard) SplitRefundByTender(Order order, Money refund)
+    {
+        var currency = order.Currency;
+        if (refund.Amount <= 0m)
+            return (Money.Zero(currency), Money.Zero(currency));
+
+        var grand = order.GrandTotal.Amount;
+        var giftCardTendered = order.GiftCardTotal.Amount;
+        if (grand <= 0m || giftCardTendered <= 0m)
+            return (new Money(refund.Amount, currency), Money.Zero(currency));
+
+        var cardShare = (grand - giftCardTendered) / grand;
+        var cardRefund = new Money(refund.Amount * cardShare, currency);
+        var giftCardRefund = new Money(refund.Amount - cardRefund.Amount, currency);
+        return (cardRefund, giftCardRefund);
     }
 }
