@@ -131,3 +131,40 @@ cd client && pnpm typecheck && pnpm lint            # tsc -b + oxlint
 If the client suite shows "Failed to start forks worker" / "Timeout waiting for worker" under a
 busy machine, that is a known jsdom-under-load flake — see `docs/testing.md` for the mitigation
 (`--pool=threads`, `--testTimeout=30000`, and per-file isolation).
+
+## Using this codebase to level up
+
+The test suite doubles as an answer key: most of the design decisions in
+`docs/architecture.md` have a test that proves them. In increasing order of
+difficulty:
+
+1. **Trace money through the totals pipeline.** Follow one checkout from
+   `Bazaar.Domain/Checkout/Calculators.cs` to the order the walkthrough above
+   creates, writing down each stage (lines → discount → shipping → tax →
+   tenders). **Check**: your numbers for the walkthrough's order reproduce the
+   $8.21 gift-card balance, and
+   `dotnet test --filter "FullyQualifiedName~TotalsPipelineTests"` names the
+   stages you listed.
+2. **Prove tender ordering matters.** Read
+   [ADR-0002](adr/0002-tender-ordering.md), then predict what a refund looks
+   like when a $10 gift card and a card both paid for a $33.50 order.
+   **Check**: `dotnet test --filter "FullyQualifiedName~RefundTenderTests"` —
+   the proportional split in those tests should match your prediction.
+3. **Watch the drift guard bite.** Do the experiment `docs/testing.md`
+   describes: add an unmapped scalar property to a mapped entity, run
+   `dotnet test --filter "FullyQualifiedName~MigrationDriftTests"`, read the
+   failure (it names the pending `AddColumn`), then remove the property.
+   **Check**: red, then green, and you can explain what the snapshot diff
+   actually compares.
+4. **Break optimistic concurrency on purpose.** Read
+   [ADR-0010](adr/0010-optimistic-concurrency.md) and `ConcurrencyTests`, then
+   simulate two admins editing the same product (two PUTs with the same stale
+   stamp, via the API or a test). **Check**: the second write gets a conflict
+   response rather than silently winning — and you can say which HTTP status
+   the API maps it to from `docs/api-reference.md`.
+5. **Design review, then compare.** Before reading
+   [ADR-0004](adr/0004-shipment-derived-status.md), write down how you would
+   model order status when partial shipments exist (stored status field?
+   derived? events?). Then read the ADR and `FulfillmentTests`. **Check**:
+   whichever side you landed on, you can argue one concrete failure mode of
+   the other approach — that argument is the mid-level skill.
